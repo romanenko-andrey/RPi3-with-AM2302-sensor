@@ -1,20 +1,27 @@
-#config.txt
-#core_freq=258
-#enable_uart=1
+import TK4S_RS485_LIB as RS485
+import time
+import ini_parser as ini
 
-import serial
-from time import sleep
+speed = float(ini.ReadSection('StageTwo')['ramp'])
+print "speed = ", speed, " C/m"
 
-port = serial.Serial("/dev/ttyS0", baudrate=2400, stopbits=2, timeout=1)
-req = bytearray([1, 4, 3, 0xE8, 0, 1, 0xB1, 0xBA])
+start_temp = RS485.read_PV()
+while type(start_temp) is str:
+  print "try to take current temperature again..."
+  start_temp = RS485.read_PV()
 
-req2 = bytearray([1,1,1,1,2,2,2,2])
-#'hello'.encode('utf-8')
-
+  
+start_time = time.time()
+print "Start time = ", time.strftime("%H:%M:%S")
+print "Start temp = ", start_temp
+    
 while True:
-    port.write(req)
-    rcv = port.read(7)
-    print(list(rcv))
-    sleep(1)
-
+  current_time = time.time()
+  next_SV = (current_time - start_time) * speed / 60
+  next_SV += start_temp
+  RS485.write_SV(next_SV)
+  time.sleep(0.05)
+  pv = RS485.read_PV()
+  print "next SV = ", int(next_SV), '; PV = ', pv
+  time.sleep(1)
 

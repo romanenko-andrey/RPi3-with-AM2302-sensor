@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Basic Page Needs -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Ash fusion Determinator</title>
+    <meta name="description" content="Lab conditions - RPi">
+    <meta name="author" content="Andrii Romanenko">
+    <!-- Mobile Specific Metas -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- FONT -->
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <!-- CSS -->
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/jquery.datetimepicker.css">
+    <link rel="stylesheet" href="static/css/my_style.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/images/favicon.png">
+  </head>
+  <body>
+    <div class="container">
+      <!-- Datetimepicker form start -->
+      <div class="row">
+        <form id="datetime_range" action="/ash" method="GET"> 
+
+          <div class="row">
+            <div class="col">
+              <label for="from">From</label>
+              <input class="" id="datetimepicker1" type="text" value="{{from_date}}" name="from">
+            </div>        
+            <div class="col">
+              <label for="to">To</label>
+              <input class="u-full-width" id="datetimepicker2" type="text" value="{{to_date}}" name="to">
+            </div>           
+            <div class="col">   
+              <!-- Timezone info goes here -->            
+              <input type="hidden" class="timezone" name="timezone" />   
+              <input id="submit_button" class="btn btn-outline-dark" type="submit" value="SEARCH"/>
+            </div>     
+          </div>            
+        </form> 
+      </div>
+    
+      <!-- Datetimepicker form end -->
+    
+      <div class="row mt-3 mb-3">
+        <button type="button" id="preheat" class="btn btn-warning mr-2">PREHEAT</button>
+        <button type="button" id="start" class="btn btn-success mr-2">START ANALYSIS</button>
+        <button type="button" id="stop_analys" class="btn btn-danger mr-2">STOP ANALYSIS</button>
+        <button type="button" id="stop_heater" class="btn btn-info">STOP HEATER</button>
+      </div>
+      
+      <div class="row">
+          <a href="" id="plotly_url" target="_blank"></a>
+          <span id="status_info"></span>
+      </div>
+      
+      <div class="row">
+        <div class="one-third column" style="margin-top: 5%">
+          <strong>Showing all records</strong>
+          <h2>Temperatures</h2>
+            <table class="u-full-width">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>&deg;C</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in temp %}
+                <tr>
+                  <td>{{row[0]}}</td>
+                  <td>{{'%0.2f'|format(row[1])}}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <h2>Humidities</h2>
+            <table class="u-full-width">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in hum %}
+                <tr>
+                  <td>{{row[0]}}</td>
+                  <td>{{'%0.2f'|format(row[1])}}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+        </div>
+      <!-- Google Charts Code start -->
+      <div class="two-thirds column" style="margin-top: 5%">
+        <div class="row">                  
+          <div class="row">
+            <div class="three columns">
+              <div id="chart_temps"></div>
+              <div id="chart_humid"></div>
+            </div>
+          </div>
+        </div>     
+      </div>
+      <!-- Google Charts Code end -->
+    </div>
+  </body>
+  
+ 
+  <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+  <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+
+  <script src="/static/javascript/jquery.datetimepicker.full.min.js"></script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstimezonedetect/1.0.6/jstz.min.js" ></script>
+  
+  
+  <script>
+    jQuery('#datetimepicker1').datetimepicker({
+      format:'Y-m-d H:i',
+      defaultDate:'{{from_date}}'
+    });
+      
+    jQuery('#datetimepicker2').datetimepicker({
+      format:'Y-m-d H:i',
+      defaultDate:'{{to_date}}'
+    });
+      
+    //This code is for the datetime range form
+    jQuery( "#datetime_range" ).submit(function( event ) {
+      timezone = jstz.determine();
+      jQuery(".timezone").val(timezone.name());      
+    });  
+
+    jQuery("#range_select input[type=radio]").click(function(){
+      timezone = jstz.determine();                // Datetimepicker code
+      jQuery(".timezone").val(timezone.name());   // Datetimepicker code
+      jQuery("#range_select").submit();
+    });
+    
+    jQuery("#preheat").click(function(){
+      jQuery("#status_info").text("Sending data...");
+      {% autoescape false %}
+      jQuery.get("/preheat?{{query_string}}")
+      {% endautoescape %}
+        .done(function( data ) {
+          var res = JSON.parse(data);
+          jQuery("#status_info").removeClass().addClass(res["state"])
+          jQuery("#status_info").text(res["msg"]);            
+      });
+      return false; //This is so that the click on the link does not cause the page to refresh
+    });
+    
+    jQuery("#stop_heater").click(function(){
+      jQuery("#status_info").text("Sending data...");
+      {% autoescape false %}
+      jQuery.get("/stop_heater?{{query_string}}")
+      {% endautoescape %}
+        .done(function( data ) {
+          var res = JSON.parse(data);
+          jQuery("#status_info").removeClass().addClass(res["state"])
+          jQuery("#status_info").text(res["msg"]);            
+      });
+      return false; //This is so that the click on the link does not cause the page to refresh
+    });
+  </script>
+
+ 
+</html>
+

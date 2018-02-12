@@ -16,10 +16,7 @@ def lab_temp():
 	import Adafruit_DHT
 	humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.AM2302, 17)
 	if humidity is not None and temperature is not None:
-		return render_template("lab_temp.html",
-    temp = temperature,
-    hum = humidity,
-    img_name = "static/images/test.jpg")
+		return render_template("lab_temp.html",temp=temperature,hum=humidity)
 	else:
 		return render_template("no_sensor.html")
 
@@ -34,6 +31,18 @@ def test():
   if not validate_date(s2):
     s4 = time.strftime("%Y-%m-%d %H:%M")
   return "from = " + s1 +"; to = " + s2 + ' ' + s3 + ' ' + s4
+
+@app.route("/lab_env_db2")
+def lab_env_db2():
+	import sqlite3
+	conn = sqlite3.connect('/var/www/lab_app/lab_app.db')
+	curs = conn.cursor()
+	curs.execute("SELECT * FROM temperatures")
+	temperatures = curs.fetchall()
+	curs.execute("SELECT * FROM humidities")
+	humidities = curs.fetchall()
+	conn.close()
+	return render_template("lab_env_db.html",temp=temperatures,hum=humidities)
 
 @app.route("/ash", methods=['GET']) 
 def ash():
@@ -91,6 +100,19 @@ def lab_env_db():
                         hum_items     = len(humidities),
                         query_string  = request.query_string) #This query string is used by the Plotly link
 
+
+def lab_env_db_without_timezone():
+  temperatures, humidities, from_date_str, to_date_str = get_records()
+  #return render_template("lab_env_db.html",temp = temperatures, hum = humidities)
+  #return render_template("lab_env_db.html",temp 	= temperatures,hum= humidities,	temp_items= len(temperatures),hum_items= len(humidities))
+  return render_template( "lab_env_db.html", 
+                          temp        = temperatures,
+                          hum         = humidities,
+                          from_date   = from_date_str, 
+                          to_date     = to_date_str,
+                          temp_items  = len(temperatures),
+                          hum_items   = len(humidities) )
+
 @app.route("/preheat", methods=['GET'])  #This method will start TK4 for heating on start temperature
 def preheat():    
   import json
@@ -103,6 +125,68 @@ def stop_heater():
   import stop_heater
   return json.dumps( stop_heater.stop_heater() )
                           
+@app.route("/to_plotly", methods=['GET'])  #This method will send the data to ploty.
+def to_plotly():
+  import plotly.plotly as py
+  from plotly.graph_objs import *
+
+  temperatures, humidities, timezone, from_date_str, to_date_str = get_records()
+
+  # Create new record tables so that datetimes are adjusted back to the user browser's time zone.
+  time_series_adjusted_tempreratures  = []
+  time_series_adjusted_humidities = []
+  time_series_temprerature_values = []
+  time_series_humidity_values = []
+
+  for record in temperatures:
+    local_timedate = arrow.get(record[0], "YYYY-MM-DD HH:mm").to(timezone)
+    time_series_adjusted_tempreratures.append(local_timedate.format('YYYY-MM-DD HH:mm'))
+    time_series_temprerature_values.append(round(record[2],2))
+
+  for record in humidities:
+    local_timedate = arrow.get(record[0], "YYYY-MM-DD HH:mm").to(timezone)
+    time_series_adjusted_humidities.append(local_timedate.format('YYYY-MM-DD HH:mm')) 
+    #Best to pass datetime in text so that Plotly respects it
+    time_series_humidity_values.append(round(record[2],2))
+
+  temp = Scatter(
+    x = time_series_adjusted_tempreratures,
+    y = time_series_temprerature_values,
+    name = 'Temperature'
+  )
+  
+  hum = Scatter(
+    x = time_series_adjusted_humidities,
+    y = time_series_humidity_values,
+    name = 'Humidity',
+    yaxis = 'y2'
+  )
+
+  data = Data([temp, hum])
+
+  layout = Layout(
+    title = "Temperature and humidity in Andrii's lab",
+    xaxis = XAxis(
+        type='date',
+        autorange=True
+    ),
+    yaxis = YAxis(
+      title = 'Celcius',
+      type = 'linear',
+      autorange = True
+    ),
+    yaxis2 = YAxis(
+      title = 'Percent',
+      type = 'linear',
+      autorange = True,
+      overlaying = 'y',
+      side = 'right'
+    )
+  )
+  fig = Figure(data = data, layout = layout)
+  plot_url = py.plot(fig, filename = 'lab_temp_hum')
+  return plot_url
+
 def get_records():
   import sqlite3
   from_date_str = request.args.get('from',time.strftime("%Y-%m-%d 00:00")) #Get the from date value from the URL
@@ -153,6 +237,49 @@ def get_records():
   conn.close()
   return [temperatures, humidities, timezone, from_date_str, to_date_str]          
  
+def get_records_without_timezone():
+    from_date_str = request.args.get('from',time.strftime("%Y-%m-%d 00:00")) #Get the from date value from the URL
+    to_date_str = request.args.get('to',time.strftime("%Y-%m-%d %H:%M"))   #Get the to date value from the URL
+    range_h_form = request.args.get('range_h','');  #This will return a string, if field range_h exists in the request
+
+    range_h_int = "nan"  #initialise this variable with not a number
+
+    try: 
+        range_h_int = int(range_h_form)
+    except:
+        print "range_h_form not a number"
+    
+    print "from = " + from_date_str
+    print "to = " + to_date_str
+    print "range = " + range_h_form
+
+    if not validate_date(from_date_str):		 			   # Validate date before sending it to the DB
+        from_date_str = time.strftime("%Y-%m-%d 00:00")
+    if not validate_date(to_date_str):
+        to_date_str = time.strftime("%Y-%m-%d %H:%M")		   # Validate date before sending it to the DB
+
+    # If range_h is defined, we don't need the from and to times
+    if isinstance(range_h_int,int):
+        time_now = datetime.datetime.now()
+        time_from = time_now - datetime.timedelta(hours = range_h_int)
+        time_to = time_now
+        from_date_str = time_from.strftime("%Y-%m-%d %H:%M")
+        to_date_str = time_to.strftime("%Y-%m-%d %H:%M")
+        
+    print "from_str = " + from_date_str
+    print "to_str = " + to_date_str
+    
+    import sqlite3
+    conn = sqlite3.connect('/var/www/lab_app/lab_app.db')
+    curs = conn.cursor()
+    curs.execute("SELECT * FROM temperatures WHERE rDateTime BETWEEN ? AND ?", (from_date_str, to_date_str))
+    temperatures = curs.fetchall()
+    curs.execute("SELECT * FROM humidities WHERE rDateTime BETWEEN ? AND ?", (from_date_str, to_date_str))
+    humidities = curs.fetchall()
+    conn.close()
+    return [temperatures, humidities, from_date_str, to_date_str]
+
+    
     
     
 def validate_date(d):

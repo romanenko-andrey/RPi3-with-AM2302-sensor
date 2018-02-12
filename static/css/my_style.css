@@ -1,0 +1,12 @@
+#submit_button {
+  position: relative; 
+  top: 28px
+}
+
+.ok {
+  color: green;
+}
+
+.error {
+  color: red;
+}
