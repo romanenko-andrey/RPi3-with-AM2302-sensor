@@ -2,6 +2,7 @@ from flask import Flask, request, render_template
 import time
 import datetime
 import arrow
+import work_with_db as db
 
 app = Flask(__name__)
 app.debug = True # Make this False if you are no longer debugging
@@ -35,6 +36,27 @@ def test():
     s4 = time.strftime("%Y-%m-%d %H:%M")
   return "from = " + s1 +"; to = " + s2 + ' ' + s3 + ' ' + s4
 
+  
+@app.route("/new_test", methods=['POST']) 
+def new_test():
+  lab_number1  = request.form.get('lab_number1','') 
+  lab_number2  = request.form.get('lab_number2','')
+  lab_number3  = request.form.get('lab_number3','')
+  operator_name = request.form.get('operator','')
+  comments = request.form.get('comments','')
+  print "NEW ANALYSIS REQUEST:"
+  print request.form
+  analysis_id = db.new_analysis([lab_number1, lab_number2, lab_number3], 
+                                     operator_name, comments)
+  return render_template("new_analysis.html",
+                        lab_number1   = lab_number1,
+                        lab_number2   = lab_number2,
+                        lab_number3   = lab_number3, 
+                        operator_name = operator_name,
+                        comments      = comments,
+                        analysis_id   = analysis_id)
+
+                        
 @app.route("/ash", methods=['GET']) 
 def ash():
   temperatures, humidities, timezone, from_date_str, to_date_str = get_records()
@@ -62,6 +84,7 @@ def ash():
                         temp_items    = len(temperatures),
                         hum_items     = len(humidities),
                         query_string  = request.query_string)
+
                         
 @app.route("/lab_env_db", methods=['GET']) 
 def lab_env_db():
@@ -91,6 +114,8 @@ def lab_env_db():
                         hum_items     = len(humidities),
                         query_string  = request.query_string) #This query string is used by the Plotly link
 
+                        
+
 @app.route("/preheat", methods=['GET'])  #This method will start TK4 for heating on start temperature
 def preheat():    
   import json
@@ -102,7 +127,14 @@ def stop_heater():
   import json
   import stop_heater
   return json.dumps( stop_heater.stop_heater() )
-                          
+
+@app.route("/results", methods=['GET'])  #This method will send SP=0 to TK4
+def get_results():    
+  import json
+  analysis_no = request.args.get('analysis_id', '0')
+  res = db.get_log(analysis_no)
+  return json.dumps(res)
+  
 def get_records():
   import sqlite3
   from_date_str = request.args.get('from',time.strftime("%Y-%m-%d 00:00")) #Get the from date value from the URL
@@ -110,22 +142,27 @@ def get_records():
   timezone      = request.args.get('timezone','Etc/UTC');
   range_h_form  = request.args.get('range_h','');  #This will return a string, if field range_h exists in the request
   range_h_int   = "nan"  #initialise this variable with not a number
-
+  id_form       = request.args.get('id','');
+  
   print "REQUEST:"
   print request.args
 
   try: 
     range_h_int = int(range_h_form)
   except:
-    print "range_h_form not a number"
-  print "Received from browser: %s, %s, %s, %s" % (from_date_str, to_date_str, timezone, range_h_int)
-
+    print "range_h not a number"
+ 
+  try: 
+    id = int(id)
+  except:
+    print "id not a number"
+   
   if not validate_date(from_date_str):			# Validate date before sending it to the DB
     from_date_str = time.strftime("%Y-%m-%d 00:00")
   if not validate_date(to_date_str):
     to_date_str = time.strftime("%Y-%m-%d %H:%M")		# Validate date before sending it to the DB
   
-  print '2. From: %s, to: %s, timezone: %s' % (from_date_str, to_date_str, timezone)
+  print 'Time recieve : From= %s, to= %s, timezone= %s' % (from_date_str, to_date_str, timezone)
   
   # Create datetime object so that we can convert to UTC from the browser's local time
   from_date_obj  = datetime.datetime.strptime(from_date_str,'%Y-%m-%d %H:%M')

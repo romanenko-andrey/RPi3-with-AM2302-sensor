@@ -6,7 +6,10 @@ from os import listdir, getcwd
 import TK4S_RS485_LIB as RS485
 import subprocess
 
+
 DB_FILENAME = '/var/www/lab_app/analysis.db'
+LED_PIN = 32
+
 
 def create_or_open_database():
   db_is_new = not os.path.exists(DB_FILENAME)
@@ -15,9 +18,9 @@ def create_or_open_database():
     print 'Creating schema LOGDATA'
     sql = '''create table if not exists LOGDATA(
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    analysis_name TEXT, 
+    ANALYSIS_ID INTEGER, 
     rDatetime DATETIME,
-    SV INT, PV INT,
+    SV INTEGER, PV INTEGER,
     IMGNAME TEXT,
     COMMENTS TEXT);'''
     conn.execute(sql) # shortcut for conn.cursor().execute(sql)
@@ -25,30 +28,60 @@ def create_or_open_database():
     print 'Creating schema RESULTS'
     sql = '''create table if not exists RESULTS(
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    LAB_NUMBER TEXT, ASH_POSITION INT,
+    ANALYSIS_ID INTEGER, 
+    LAB_NUMBER TEXT, ASH_POSITION INTEGER,
     START_TIME DATETIME,
     OPERATOR TEXT, COMMENTS TEXT,
-    TEMP1 INT, IMG1 BLOB, IMGNAME1 TEXT,
-    TEMP2 INT, IMG2 BLOB, IMGNAME2 TEXT,
-    TEMP3 INT, IMG3 BLOB, IMGNAME3 TEXT,
-    TEMP4 INT, IMG4 BLOB, IMGNAME4 TEXT);'''
+    TEMP1 INTEGER, IMG1 BLOB, IMGNAME1 TEXT,
+    TEMP2 INTEGER, IMG2 BLOB, IMGNAME2 TEXT,
+    TEMP3 INTEGER, IMG3 BLOB, IMGNAME3 TEXT,
+    TEMP4 INTEGER, IMG4 BLOB, IMGNAME4 TEXT);'''
     conn.execute(sql)
   return conn
+
+
+def test():
+  conn = create_or_open_database()
+  curs = conn.cursor()  
+  sql = """SELECT analysis_id FROM LOGDATA ORDER BY rDatetime DESC limit 1;"""
+  curs.execute(sql)
+  s = curs.fetchone() 
+  print 's=', s
+  conn.close()
+  return s
   
-def new_analysis(lab_number, operator, comments = ''):
+#db.new_analysis(['1','2','3'], 'roll', '')
+#import work_with_db as db
+
+  
+def new_analysis(lab_numbers, operator, comments = ''):
   conn = create_or_open_database()
   curs = conn.cursor()
+  
+  sql = """SELECT analysis_id FROM LOGDATA ORDER BY rDatetime DESC limit 1;"""
+   
+  curs.execute(sql)
+  res = curs.fetchone()  
+  if res == None:
+    analysis_id = 1
+  else:
+    analysis_id = res[0] + 1
+  print "new analysis number = ", analysis_id
+  
+  start_time = time.strftime('%Y-%m-%d %H:%M:%S')
   sql = """INSERT INTO RESULTS 
-    (START_TIME, LAB_NUMBER, ASH_POSITION, OPERATOR, COMMENTS)       
-    VALUES (datetime(CURRENT_TIMESTAMP, 'localtime'),?, ?, ?, ?);"""
-  curs.execute(sql, [lab_number, 1, operator, comments])
-  curs.execute(sql, [lab_number, 2, operator, comments])
-  curs.execute(sql, [lab_number, 3, operator, comments])
+    (START_TIME, ANALYSIS_ID, LAB_NUMBER, ASH_POSITION, OPERATOR, COMMENTS)       
+    VALUES (? ,?, ?, ?, ?, ?);"""
+  curs.execute(sql, [start_time, analysis_id, lab_numbers[0], 1, operator, comments])
+  curs.execute(sql, [start_time, analysis_id, lab_numbers[1], 2, operator, comments])
+  curs.execute(sql, [start_time, analysis_id, lab_numbers[2], 3, operator, comments])
   
   conn.commit()
   conn.close()
+  add_new_log(analysis_id, False, "initial log")
+  return analysis_id
 
-def insert_picture(analysis_id, stage, picture_file):
+def insert_picture(id, stage, picture_file):
   if not os.path.exists(picture_file):
     print 'file name ', picture_file, ' is not correct'
     return False
@@ -69,11 +102,11 @@ def insert_picture(analysis_id, stage, picture_file):
       sql='''UPDATE RESULTS SET TEMP3 = ?, IMG3 = ?, IMGNAME3 = ? WHERE ID=?;'''
     if stage == 4:
       sql='''UPDATE RESULTS SET TEMP4 = ?, IMG4 = ?, IMGNAME4 = ? WHERE ID=?;'''
-    conn.execute(sql,[atemp, sqlite3.Binary(ablob), picture_file, analysis_id]) 
+    conn.execute(sql,[atemp, sqlite3.Binary(ablob), picture_file, id]) 
     conn.commit()
   conn.close()
   return True
-        
+  
 def extract_picture(analysis_id, stage):
   conn = create_or_open_database()
   curs = conn.cursor()
@@ -89,7 +122,9 @@ def extract_picture(analysis_id, stage):
   param = {'id': analysis_id}
   curs.execute(sql, param)
   atemp, afile, ablob = curs.fetchone()
-
+  conn.commit()
+  conn.close()
+  
   fname, fext = os.path.splitext( os.path.abspath(afile) )
   filename = fname + '_' + str(stage) + fext
 
@@ -97,13 +132,22 @@ def extract_picture(analysis_id, stage):
     output_file.write(ablob)
   return filename       
 
-def add_new_log(analysis_name, save_picture = True, comments = ''):
+  
+def add_new_log(analysis_id, save_picture = True, comments = ''):
+  import RPi.GPIO as GPIO
+  GPIO.setwarnings(False)
+  GPIO.setmode(GPIO.BOARD)
+  GPIO.setup(LED_PIN, GPIO.OUT)
+  GPIO.output(LED_PIN, GPIO.HIGH)
+
   pv = RS485.reads_PV()
   if type(pv) is str:
+    GPIO.cleanup()
     return pv
     
   sv = RS485.reads_SV()
   if type(sv) is str:
+    GPIO.cleanup()
     return sv
    
   if save_picture:
@@ -121,8 +165,23 @@ def add_new_log(analysis_name, save_picture = True, comments = ''):
   conn = create_or_open_database()
   curs = conn.cursor()
   sql = """INSERT INTO LOGDATA 
-    (analysis_name, rDatetime, SV, PV, IMGNAME, COMMENTS)       
+    (analysis_id, rDatetime, SV, PV, IMGNAME, COMMENTS)       
     VALUES (?, datetime(CURRENT_TIMESTAMP, 'localtime'),?, ?, ?, ?);"""
-  curs.execute(sql, [analysis_name, sv, pv, img_name, comments])
+  curs.execute(sql, [analysis_id, sv, pv, img_name, comments])
   conn.commit()
   conn.close()
+  GPIO.output(LED_PIN, GPIO.LOW)
+  GPIO.cleanup()
+  return [sv, pv, img_name]
+  
+def get_log(analysis_id):
+  conn = create_or_open_database()
+  curs = conn.cursor()
+  sql = """SELECT rDatetime, SV, PV, IMGNAME, COMMENTS FROM LOGDATA WHERE ANALYSIS_ID = ?;"""
+  curs.execute(sql, [analysis_id]) 
+  res = curs.fetchall()
+  conn.commit()
+  conn.close()
+  return res
+
+

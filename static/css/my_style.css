@@ -1,6 +1,19 @@
+
+#datetimepicker1,
+#datetimepicker2 {
+  width:100%
+}
+
+.find_button_div{
+   padding: 20px 15px 0 15px;
+   
+}
 #submit_button {
-  position: relative; 
-  top: 28px
+  /*position: relative; 
+  #top: 28px*/
+  padding: 5px;
+  height: 100%;
+  width: 100%;
 }
 
 .ok {
@@ -9,4 +22,11 @@
 
 .error {
   color: red;
+}
+
+#datetime_range,
+#new_test_form{
+  border: 1px solid gray;
+  padding: 7px;
+  border-radius: 7px;
 }

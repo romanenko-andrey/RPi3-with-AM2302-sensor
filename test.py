@@ -4,7 +4,7 @@ import subprocess
 
 #db.insert_picture(6, 3, 'static/images/2018-02-12/11:24:45+114.jpg')
 #db.extract_picture(6,3)
-db.add_new_log('The NEW', False, 'hi');
+print db.add_new_log('The NEW', True, 'hi');
 
 #while True:
 #  cmd = "raspistill -w 720 -h 720 -t 100 -vf -hf -o static/images/test.jpg"

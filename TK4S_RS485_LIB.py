@@ -20,6 +20,7 @@ req_read_PV  = bytearray([0x01, 0x04, 0x03, 0xE8, 0x00, 0x01, 0xB1, 0xBA])
 req_set_1100 = bytearray([1, 6, 0, 0x39, 4, 0x4c, 0x5a, 0xf2])
 req_read_SV  = bytearray([0x01, 0x04, 0x03, 0xEB, 0x00, 0x01, 0x41, 0xBA])
 req_save_SV  = bytearray([0x01, 0x06, 0x00, 0x39, 0x00, 0x00, 0x00, 0x00])
+req_save_MV  = bytearray([0x01, 0x06, 0x00, 0x72, 0x00, 0x00, 0x00, 0x00])
 
 CRC_ERROR_MSG = "CRC error" 
 PKG_SIZE_ERROR_MSG = "error package size"
@@ -89,6 +90,28 @@ def write_SV(sv):
     return True    
   else: 
     print "Error send SV = ", sv
+    return False
+
+def write_max_output_value(sv):
+  req_save_MV[4] = int(sv) // 256
+  req_save_MV[5] = int(sv) % 256
+  crc16 = CRC16( modbus_flag = True ).calculate( str(req_save_MV[0:6]) )
+  req_save_MV[6] = crc16 % 256
+  req_save_MV[7] = crc16 // 256
+  try:
+    port.open()
+    port.write(req_save_MV)
+    rcv = port.read(8)
+    port.close()
+  except:
+    port.close()
+    return PORT_ERROR_MSG     
+    
+  rez = bytearray(rcv)
+  if rez == req_save_MV:
+    return True    
+  else: 
+    print "Error send MV = ", sv
     return False
     
 def reads_SV():
