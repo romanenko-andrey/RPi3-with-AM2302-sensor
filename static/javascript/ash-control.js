@@ -17,7 +17,12 @@ function showResults(data){
 }
   
 $("#new_test").click(function(){
-  $("#new_test_form").toggle();
+  $("#new_test_form_section").toggle();
+  return false; 
+});
+
+$("#search_test").click(function(){
+  $("#search_form_section").toggle();
   return false; 
 });
 

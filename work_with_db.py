@@ -29,9 +29,12 @@ def create_or_open_database():
     sql = '''create table if not exists RESULTS(
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
     ANALYSIS_ID INTEGER, 
+    rDatetime DATETIME,
     LAB_NUMBER TEXT, ASH_POSITION INTEGER,
-    START_TIME DATETIME,
     OPERATOR TEXT, COMMENTS TEXT,
+    START_TEMP INTEGER,
+    START_TIME DATETIME,
+    STATUS TEXT,
     TEMP1 INTEGER, IMG1 BLOB, IMGNAME1 TEXT,
     TEMP2 INTEGER, IMG2 BLOB, IMGNAME2 TEXT,
     TEMP3 INTEGER, IMG3 BLOB, IMGNAME3 TEXT,
@@ -54,7 +57,7 @@ def test():
 #import work_with_db as db
 
   
-def new_analysis(lab_numbers, operator, comments = ''):
+def new_analysis(lab_numbers, operator, comments = ['', '', '']):
   conn = create_or_open_database()
   curs = conn.cursor()
   
@@ -68,13 +71,15 @@ def new_analysis(lab_numbers, operator, comments = ''):
     analysis_id = res[0] + 1
   print "new analysis number = ", analysis_id
   
-  start_time = time.strftime('%Y-%m-%d %H:%M:%S')
+  rDatetime = time.strftime('%Y-%m-%d %H:%M:%S')
   sql = """INSERT INTO RESULTS 
-    (START_TIME, ANALYSIS_ID, LAB_NUMBER, ASH_POSITION, OPERATOR, COMMENTS)       
-    VALUES (? ,?, ?, ?, ?, ?);"""
-  curs.execute(sql, [start_time, analysis_id, lab_numbers[0], 1, operator, comments])
-  curs.execute(sql, [start_time, analysis_id, lab_numbers[1], 2, operator, comments])
-  curs.execute(sql, [start_time, analysis_id, lab_numbers[2], 3, operator, comments])
+    (rDatetime, ANALYSIS_ID, LAB_NUMBER, ASH_POSITION, OPERATOR, COMMENTS, STATUS)       
+    VALUES (?, ? ,?, ?, ?, ?, ?);"""
+    
+  status = "READY"
+  curs.execute(sql, [rDatetime, analysis_id, lab_numbers[0], 1, operator, comments[0], status])
+  curs.execute(sql, [rDatetime, analysis_id, lab_numbers[1], 2, operator, comments[1], status])
+  curs.execute(sql, [rDatetime, analysis_id, lab_numbers[2], 3, operator, comments[2], status])
   
   conn.commit()
   conn.close()
@@ -184,4 +189,27 @@ def get_log(analysis_id):
   conn.close()
   return res
 
+def get_results_for_dates(date_from, date_to):
+  conn = create_or_open_database()
+  curs = conn.cursor()
+  curs.execute("SELECT * FROM RESULTS WHERE rDateTime BETWEEN ? AND ?", [date_from, date_to])
+  res = curs.fetchall()
+  conn.close()
+  return res
+  
+def get_result_for_id(id):
+  conn = create_or_open_database()
+  curs = conn.cursor()
+  curs.execute("SELECT * FROM RESULTS WHERE ANALYSIS_ID = ?", [id])
+  res = curs.fetchall()
+  conn.close()
+  return res
+
+def get_last_result():
+  conn = create_or_open_database()
+  curs = conn.cursor()
+  curs.execute("SELECT * FROM RESULTS ORDER BY ANALYSIS_ID DESC limit 3")
+  res = curs.fetchall()
+  conn.close()
+  return res  
 

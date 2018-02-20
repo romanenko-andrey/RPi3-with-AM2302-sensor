@@ -28,19 +28,17 @@
         <button type="button" id="stop_and_cool" class="btn btn-danger mr-2 mb-1">STOP & COOL</button>
         <button type="button" id="stop_heater" class="btn btn-info mr-2 mb-1">STOP HEATER</button>
         <button type="button" id="update" class="btn btn-info mr-2 mb-1">UPDATE</button>
-        <a href="/ash?id={{analysis_id}}" class="btn btn-success btn mb-1">&LessLess;</a>
+        <a href="/?id={{analysis_id}}" class="btn btn-success btn mb-1">RETURN</a>
       </div>
       <!-- Status string -->
       <div class="row mb-3">
         <span id="status_info"></span>
       </div>
-      <div class="row">
-        <div class="col-2">{{ operator_name }}</div>
-        <div class="col-2">{{ lab_number1 }}</div>
-        <div class="col-2">{{ lab_number2 }}</div>
-        <div class="col-2">{{ lab_number3 }}</div>
-        <div class="col-2">{{ comments }}</div>
-      </div>
+
+      {% for row in log %}
+        <h3>{{row}}</h3>
+      {% endfor %}
+      
     </div>
   </body>
   

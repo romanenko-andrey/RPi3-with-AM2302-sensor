@@ -8,10 +8,11 @@
    padding: 20px 15px 0 15px;
    
 }
-#submit_button {
+
+.submit_button {
   /*position: relative; 
   #top: 28px*/
-  padding: 5px;
+  padding: 8px;
   height: 100%;
   width: 100%;
 }
