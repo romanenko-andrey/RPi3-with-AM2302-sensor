@@ -27,48 +27,52 @@ PKG_SIZE_ERROR_MSG = "error package size"
 PORT_ERROR_MSG = "Serial port open error"
 ERROR_READ_SV = 'Error: cannot read SV from TK4S'
 ERROR_READ_PV = 'Error: cannot read PV from TK4S'
+ERROR_WRITE_SV = 'Error: cannot write SV to TK4S'
+TEMPERATURE_ERROR_MSG = 'Error: the temperaure is out of range = 0 .. 1600'
 
-def read_SV():
+def open_port_and_read(request, n):
   try:
     port.open()
-    port.write(req_read_SV)
-    rcv = port.read(7)
+    port.write(request)
+    rcv = port.read(n) 
     port.close()
+    return rcv
   except:
     port.close()
-    return PORT_ERROR_MSG
-      
+    return False
+
+def check_crc_n7(rcv):
   rez = bytearray(rcv)
   crc16 = CRC16( modbus_flag = True ).calculate(rcv[0:5])
   if len(rez) == 7:
     crc = rez[6] * 256 + rez[5] 
     if crc == crc16:
-      return rez[3] * 256 + rez[4]
+      res = 256*rez[3] + rez[4]
+      if res > 1600:
+        return TEMPERATURE_ERROR_MSG
+      else:
+        return res
     else:
       return CRC_ERROR_MSG   
   else: 
     return PKG_SIZE_ERROR_MSG
 
-def read_PV():
-  try:
-    port.open()
-    port.write(req_read_PV)
-    rcv = port.read(7)
-    port.close()
-  except:
-    port.close()
-    return PORT_ERROR_MSG  
+    
+def read_SV():
+  rcv = open_port_and_read(req_read_SV, 7)
+  if rcv == False:
+    return PORT_ERROR_MSG
+  else:
+    return check_crc_n7(rcv)    
   
-  rez = bytearray(rcv)
-  crc16 = CRC16( modbus_flag = True ).calculate(rcv[0:5])
-  if len(rez) == 7:
-    crc = 256*rez[6] + rez[5] 
-    if crc == crc16:
-      return 256*rez[3] + rez[4]
-    else:
-      return CRC_ERROR_MSG     
-  else: 
-    return PKG_SIZE_ERROR_MSG
+
+def read_PV():
+  rcv = open_port_and_read(req_read_PV, 7)
+  if rcv == False:
+    return PORT_ERROR_MSG
+  else:
+    return check_crc_n7(rcv)    
+  
  
 def write_SV(sv):
   req_save_SV[4] = int(sv) // 256
@@ -76,21 +80,15 @@ def write_SV(sv):
   crc16 = CRC16( modbus_flag = True ).calculate( str(req_save_SV[0:6]) )
   req_save_SV[6] = crc16 % 256
   req_save_SV[7] = crc16 // 256
-  try:
-    port.open()
-    port.write(req_save_SV)
-    rcv = port.read(8)
-    port.close()
-  except:
-    port.close()
-    return PORT_ERROR_MSG     
-    
-  rez = bytearray(rcv)
-  if rez == req_save_SV:
-    return True    
-  else: 
-    print "Error send SV = ", sv
-    return False
+  
+  rcv = open_port_and_read(req_save_SV, 8)
+  if rcv == False:
+    return PORT_ERROR_MSG
+  else:    
+    rez = bytearray(rcv)
+    if rez != req_save_SV:
+      return False    
+  return True
 
 def write_max_output_value(sv):
   req_save_MV[4] = int(sv) // 256
@@ -98,14 +96,10 @@ def write_max_output_value(sv):
   crc16 = CRC16( modbus_flag = True ).calculate( str(req_save_MV[0:6]) )
   req_save_MV[6] = crc16 % 256
   req_save_MV[7] = crc16 // 256
-  try:
-    port.open()
-    port.write(req_save_MV)
-    rcv = port.read(8)
-    port.close()
-  except:
-    port.close()
-    return PORT_ERROR_MSG     
+  
+  rcv = open_port_and_read(req_save_MV, 8)
+  if rcv == False:
+    return PORT_ERROR_MSG
     
   rez = bytearray(rcv)
   if rez == req_save_MV:
@@ -135,3 +129,14 @@ def reads_PV():
   if attempt == 0 and type(pv) is str:
     return ERROR_READ_PV
   return pv
+
+def writes_SV(sv):
+  attempt = MAX_ATTEMPTS
+  while write_SV(sv) == False and attempt > 0:
+    attempt -= 1
+    time.sleep(0.05)
+  if attempt == 0:
+    return ERROR_WRITE_SV
+  return True 
+  
+  

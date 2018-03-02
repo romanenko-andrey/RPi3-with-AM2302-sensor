@@ -1,4 +1,3 @@
-
 #datetimepicker1,
 #datetimepicker2 {
   width:100%
@@ -6,9 +5,7 @@
 
 .find_button_div{
    padding: 20px 15px 0 15px;
-   
 }
-
 .submit_button {
   /*position: relative; 
   #top: 28px*/
@@ -16,11 +13,26 @@
   height: 100%;
   width: 100%;
 }
-
+.control-btn, .analysis-btn{
+  padding: .5rem 1rem;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  border-radius: .3rem;
+  margin: 5px 0;
+}
+.control-btn{
+  width: 25%;
+}
+.analysis-btn{
+  width: calc(33% - 3px);
+}
+.table td, .table th{
+  text-align: center;
+  padding: 0.25rem;
+}
 .ok {
   color: green;
 }
-
 .error {
   color: red;
 }
@@ -30,4 +42,78 @@
   border: 1px solid gray;
   padding: 7px;
   border-radius: 7px;
+}
+
+.img_small {
+  width: 100px;
+  margin: -4px 0;
+}
+
+.img_big {
+  width: 320px;
+  left: -320px;
+  position: absolute;
+}
+
+.td-img-small{
+  position: relative;
+}
+
+#img-size-form label{
+  display: inline-block;
+}
+
+@media (max-width: 1200px) {
+  .th-comments, .th-no{
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .control-btn{
+    width: calc(50% - 3px);
+  }
+
+  .th-operator, .th-start-temp, .th-start-time, .th-status{
+    display: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .control-btn, .analysis-btn{
+    width:100%;
+  }
+  .analysis-btn{
+    width: calc(50% - 3px);
+  }
+  .th-date{
+    display: none;
+  }
+  .td-date-time{
+    font-size: 0.75em;
+  }
+  .table td, .table th{
+    padding: 5px;
+  }
+}
+
+@media (max-width: 400px) {
+  .analysis-btn{
+    width: 100%;
+  }
+  h2.results-table-header{
+    font-size: 1.5rem;
+  }
+  .img_big {
+    width: 250px;
+    left: -200px;
+    position: absolute;
+    z-index: 100;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none;
+  }
 }

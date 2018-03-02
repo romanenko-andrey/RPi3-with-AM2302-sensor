@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Basic Page Needs -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Camera test</title>
+    <meta name="description" content="Ash fusion Determinator - RPi">
+    <meta name="author" content="Andrii Romanenko">
+    <!-- Mobile Specific Metas -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- FONT -->
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <!-- CSS -->
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="static/css/skeleton.css">
+    <link rel="stylesheet" href="static/css/my_style.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/images/favicon.png">
+  </head>
+  
+  <body>
+    <div class="container">
+      <div>
+        <h4>Camera Test</h4>
+        <a href="/" class="button">GO TO MAIN PAGE</a>
+      </div>  
+      <div class="row">
+        <form id="img-size-form" action = "/camera" method="GET">  
+          <h4>Select resolution:</h4>
+          <div class="two columns">
+            <input class="form-check-input" type="radio" name="size" value="160x160" id="radio_1" />
+            <label class="form-check-label" for="radio_1">160x160</label>
+          </div>
+          <div class="two columns">  
+            <input class="form-check-input" type="radio" name="size" value="320x320" id="radio_2" />
+            <label class="form-check-label" for="radio_2">320x320</label>
+          </div>
+          <div class="two columns">
+            <input class="form-check-input" type="radio" name="size" value="720x720" id="radio_3" />
+            <label class="form-check-label" for="radio_3">720x720</label>
+          </div>
+          <div class="two columns">
+            <input class="form-check-input" type="radio" name="size" value="1200x800" id="radio_4" />
+            <label class="form-check-label" for="radio_4">1200x800</label>
+          </div>  
+        </form>  
+      </div>
+      <div class="row text-center">
+        <div>
+           <img class="w-100" src='{{img_name}}'/>
+        </div>
+      </div>
+    </div>
+
+  </body>
+ 
+  <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+  <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+  <script> 
+    jQuery("#img-size-form input[type=radio]").click(function(){
+      jQuery("#img-size-form").submit();
+    });
+   </script>
+</html>

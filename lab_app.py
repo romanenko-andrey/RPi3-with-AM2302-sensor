@@ -3,9 +3,13 @@ import time
 import datetime
 import arrow
 import work_with_db as db
+import subprocess
+import json
+import work_with_camera
 
 app = Flask(__name__)
 app.debug = True # Make this False if you are no longer debugging
+
 
 @app.route("/", methods=['GET']) 
 def ash():
@@ -16,61 +20,80 @@ def ash():
                         to_date       = to_date_str,
                         res_items     = len(results),
                         analysis_id   = analysis_id)
-
+ 
                         
 @app.route("/analysis", methods=['GET']) 
 def analysis():
   analysis_id  = request.args.get('id', None) 
+  page = request.args.get('page', '0')  
   try: 
     analysis_id = int(analysis_id)
   except:
-    print "id not a number"
     return redirect('/')
-    
-  print "id = ", analysis_id  
-    
-  log = db.get_log(analysis_id)
-  return render_template("analysis.html", analysis_id = analysis_id, log = log)
+  log = db.get_log(analysis_id, page)
+  return render_template("analysis.html", analysis_id=analysis_id, log=log, page=page)
+
+  
+@app.route("/table", methods=['GET']) 
+def table():
+  analysis_id  = request.args.get('id', None) 
+  count = request.args.get('count', '100')  
+  try: 
+    analysis_id = int(analysis_id)
+  except:
+    return redirect('/')
+  log, ramp = db.get_n_log(analysis_id, count)
+  return render_template("table.html", analysis_id=analysis_id, log=log, ramp=ramp, count=int(count) )
 
   
 @app.route("/new_test", methods=['POST']) 
 def new_test():
-  lab_number1  = request.form.get('lab_number1','') 
-  lab_number2  = request.form.get('lab_number2','')
-  lab_number3  = request.form.get('lab_number3','')
-  comments1    = request.form.get('comments1','') 
-  comments2    = request.form.get('comments2','')
-  comments3    = request.form.get('comments3','')
-  operator_name = request.form.get('operator','')
-
-  print "ANALYSIS REQUEST:"
-  print request.form
-  analysis_id = db.new_analysis([lab_number1, lab_number2, lab_number3], 
-                       operator_name, [comments1, comments2, comments3])
-  
-  #return render_template("analysis.html", analysis_id = analysis_id)
-  #return redirect( url_for('/analysis') )
+  ln1, ln2, ln3, c1, c2, c3, operator = get_records_for_new_analysis()
+  analysis_id = db.new_analysis([ln1, ln2, ln3], operator, [c1, c2, c3])
   return redirect( "/analysis?id=%s" % analysis_id )
 
-                        
+  
+@app.route("/camera", methods=['GET'])  
+def camera():    
+  size = request.args.get('size','320x320')
+  w, h = size.split('x')
+  img_name_src = 'static/images/camera' + size + '.jpg'
+  img_name = '/var/www/lab_app/' + img_name_src
+  work_with_camera.get_photo(w, h, img_name)
+  return render_template("img_test.html", img_name = img_name_src)
+
+
 @app.route("/preheat", methods=['GET'])  #This method will start TK4 for heating on start temperature
 def preheat():    
-  import json
   import preheat
   return json.dumps( preheat.set_preheat_temp() )
 
+  
 @app.route("/stop_heater", methods=['GET'])  #This method will send SP=0 to TK4
 def stop_heater():    
-  import json
   import stop_heater
   return json.dumps( stop_heater.stop_heater() )
 
+  
+@app.route("/start", methods=['GET'])  #Start log-bot and heat-bot
+def start_analysis():  
+  import heating
+  return json.dumps( heating.heating() )
+
+  
+@app.route("/cool", methods=['GET'])  #Start cooling-bot
+def start_cooling():   
+  import cooling
+  return json.dumps( cooling.cooling() )
+
+  
 @app.route("/results", methods=['GET'])  #This method will send SP=0 to TK4
 def get_results():    
   import json
   analysis_no = request.args.get('analysis_id', '0')
   res = db.get_log(analysis_no)
   return json.dumps(res)
+
   
 def get_records():
   #Get the from date value from the URL
@@ -95,15 +118,24 @@ def get_records():
   if id != None:
     results = db.get_result_for_id(id)
   elif dates_req == None:
-    results = db.get_last_result() 
-    id = results[0][1]
+    results = db.get_last_result()
+    if len(results) > 0:    
+      id = results[0][1]
   else:
     results = db.get_results_for_dates(from_date_str, to_date_str)
    
   return [results, id, from_date_str, to_date_str]          
- 
-    
-    
+
+def get_records_for_new_analysis():
+  l1 = request.form.get('lab_number1','') 
+  l2 = request.form.get('lab_number2','')
+  l3 = request.form.get('lab_number3','')
+  c1 = request.form.get('comments1','') 
+  c2 = request.form.get('comments2','')
+  c3 = request.form.get('comments3','')
+  o  = request.form.get('operator','')
+  return  [l1, l2, l3, c1, c2, c3, o] 
+  
 def validate_date(d):
   try:
     datetime.datetime.strptime(d, '%Y-%m-%d %H:%M')

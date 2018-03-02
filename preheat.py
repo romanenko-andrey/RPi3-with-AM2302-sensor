@@ -1,6 +1,7 @@
 import TK4S_RS485_LIB as RS485
 import time
 import ConfigParser
+import work_with_db as db
 
 Config = ConfigParser.ConfigParser()
 
@@ -10,13 +11,7 @@ def set_preheat_temp():
   max_preheat_power_value = Config.getint("StageOne", "max_preheat_power_value")
   
   print "try to set temperature = " + str(set_temperature) 
-  attempt = RS485.MAX_ATTEMPTS   
-  while attempt > 0:
-    if (RS485.write_SV(set_temperature) == True):
-      break
-      return {'state': 'ok', 'msg' : 'The preheating is starting now.'}
-    attempt -= 1
-  if (attempt == 0):  
+  if RS485.writes_SV(set_temperature) == False:
     return {'state': 'error', 
             'msg' : "Error write temperature = " + 
             str(set_temperature) + 
@@ -26,10 +21,12 @@ def set_preheat_temp():
   attempt = RS485.MAX_ATTEMPTS   
   while attempt > 0:
     if (RS485.write_max_output_value(max_preheat_power_value) == True):
+      db.add_new_log_to_and("PREHEAT", db.SAVE_START_TIME, db.DONT_SAVE_PICTURE, "preheat on")
       return {'state': 'ok', 'msg' : 'The preheating is starting now.'}
     attempt -= 1
   return {'state': 'error', 
           'msg' : "Error write maximum power value = " + 
           str(max_preheat_power_value) + 
           " to TK4S. Check the connection and try again..."}      
+  
 

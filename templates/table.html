@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Basic Page Needs -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Ash analysis #{{analysis_id}} table</title>
+    <meta name="description" content="Ash fusion Determinator - RPi">
+    <meta name="author" content="Andrii Romanenko">
+    <!-- Mobile Specific Metas -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- FONT -->
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <!-- CSS -->
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/my_style.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/images/favicon.png">
+  </head>
+  
+  <body>
+    <div class="container">
+      <a href="/table?id={{analysis_id}}&count={{count}}">
+        <h2>Ash analysis id#<span id="analysis_id">{{analysis_id}}</span>, table of {{count}} results</h2>
+      </a>
+      <a href="/?id={{analysis_id}}" class="btn btn-info analysis-btn">MAIN TABLE</a>
+      <a href="/analysis?id={{analysis_id}}" class="btn btn-success analysis-btn">RETURN</a>
+     
+      <table class="table table-striped table-hover">
+        <thead class="thead-dark">
+          <tr>
+            <th class="th-no">#</th>
+            <th>Log Time</th>
+            <th>Set Temp, &deg;C </th>
+            <th>Real Temp, &deg;C</th>
+            <th>DeltaT, &deg;C</th>
+            <th>Rump, &deg;C/min</th>
+            <th class="th-status">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i in range( ramp|length ): %}
+          <tr data-id="{{log[i][0]}}">
+            <td class="th-no">{{log[i][0]}}</td>
+            <td class="td-date-time">{{log[i][2]}}</td>
+            <th>{{log[i][3]}}</th>
+            <th>{{log[i][4]}}</th>
+            <td>{{log[i][4] - log[i][3]}}</td>
+            <th>{{'%0.1f'|format(ramp[i][2])}}</th>
+            
+            <td class="th-status">{{log[i][8]}}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </body>
+  
+ 
+  <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+  <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+  <script src="static/javascript/ash-control.js"></script>
+</html>
+

@@ -1,15 +1,30 @@
 import sqlite3
 import sys
 import time
+import datetime as dt
 import os.path
 from os import listdir, getcwd
 import TK4S_RS485_LIB as RS485
 import subprocess
+import ConfigParser
+import RPi.GPIO as GPIO
+import work_with_camera
 
+Config = ConfigParser.ConfigParser()
+Config.read("/var/www/lab_app/settings.ini")
+try:
+  log_per_page = Config.getint('General', 'log_per_page')
+except:
+  log_per_page = 30
+
+print "log_per_page = ", log_per_page
 
 DB_FILENAME = '/var/www/lab_app/analysis.db'
 LED_PIN = 32
-
+SAVE_PICTURE = True
+DONT_SAVE_PICTURE = False
+SAVE_START_TIME = True
+DONT_SAVE_START_TIME = False
 
 def create_or_open_database():
   db_is_new = not os.path.exists(DB_FILENAME)
@@ -20,8 +35,12 @@ def create_or_open_database():
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
     ANALYSIS_ID INTEGER, 
     rDatetime DATETIME,
-    SV INTEGER, PV INTEGER,
+    SV INTEGER, 
+    PV INTEGER,
     IMGNAME TEXT,
+    START_TEMP INTEGER,
+    START_TIME DATETIME,
+    STATUS TEXT,
     COMMENTS TEXT);'''
     conn.execute(sql) # shortcut for conn.cursor().execute(sql)
     
@@ -32,9 +51,6 @@ def create_or_open_database():
     rDatetime DATETIME,
     LAB_NUMBER TEXT, ASH_POSITION INTEGER,
     OPERATOR TEXT, COMMENTS TEXT,
-    START_TEMP INTEGER,
-    START_TIME DATETIME,
-    STATUS TEXT,
     TEMP1 INTEGER, IMG1 BLOB, IMGNAME1 TEXT,
     TEMP2 INTEGER, IMG2 BLOB, IMGNAME2 TEXT,
     TEMP3 INTEGER, IMG3 BLOB, IMGNAME3 TEXT,
@@ -53,16 +69,11 @@ def test():
   conn.close()
   return s
   
-#db.new_analysis(['1','2','3'], 'roll', '')
-#import work_with_db as db
-
-  
 def new_analysis(lab_numbers, operator, comments = ['', '', '']):
   conn = create_or_open_database()
   curs = conn.cursor()
   
   sql = """SELECT analysis_id FROM LOGDATA ORDER BY rDatetime DESC limit 1;"""
-   
   curs.execute(sql)
   res = curs.fetchone()  
   if res == None:
@@ -73,17 +84,16 @@ def new_analysis(lab_numbers, operator, comments = ['', '', '']):
   
   rDatetime = time.strftime('%Y-%m-%d %H:%M:%S')
   sql = """INSERT INTO RESULTS 
-    (rDatetime, ANALYSIS_ID, LAB_NUMBER, ASH_POSITION, OPERATOR, COMMENTS, STATUS)       
-    VALUES (?, ? ,?, ?, ?, ?, ?);"""
+    (rDatetime, ANALYSIS_ID, LAB_NUMBER, ASH_POSITION, OPERATOR, COMMENTS)       
+    VALUES (?, ? ,?, ?, ?, ?);"""
     
-  status = "READY"
-  curs.execute(sql, [rDatetime, analysis_id, lab_numbers[0], 1, operator, comments[0], status])
-  curs.execute(sql, [rDatetime, analysis_id, lab_numbers[1], 2, operator, comments[1], status])
-  curs.execute(sql, [rDatetime, analysis_id, lab_numbers[2], 3, operator, comments[2], status])
+  curs.execute(sql, [rDatetime, analysis_id, lab_numbers[0], 1, operator, comments[0]])
+  curs.execute(sql, [rDatetime, analysis_id, lab_numbers[1], 2, operator, comments[1]])
+  curs.execute(sql, [rDatetime, analysis_id, lab_numbers[2], 3, operator, comments[2]])
   
   conn.commit()
   conn.close()
-  add_new_log(analysis_id, False, "initial log")
+  add_new_log(analysis_id, "READY", SAVE_START_TIME, DONT_SAVE_PICTURE, "initial log")
   return analysis_id
 
 def insert_picture(id, stage, picture_file):
@@ -137,57 +147,92 @@ def extract_picture(analysis_id, stage):
     output_file.write(ablob)
   return filename       
 
-  
-def add_new_log(analysis_id, save_picture = True, comments = ''):
-  import RPi.GPIO as GPIO
+def add_new_log_to_and(status, save_start_position, save_picture, comments = ''):
+  id, status_now, temp, start_temp, start_time  = get_last_log()
+  add_new_log(id, status, save_start_position, save_picture, comments)
+    
+def add_new_log(analysis_id, status, save_start_position = False, save_picture = True, comments = ''):
   GPIO.setwarnings(False)
   GPIO.setmode(GPIO.BOARD)
   GPIO.setup(LED_PIN, GPIO.OUT)
   GPIO.output(LED_PIN, GPIO.HIGH)
-
-  pv = RS485.reads_PV()
-  if type(pv) is str:
-    GPIO.cleanup()
-    return pv
-    
-  sv = RS485.reads_SV()
-  if type(sv) is str:
-    GPIO.cleanup()
-    return sv
-   
-  if save_picture:
-    img_path = 'static/images/' + time.strftime("%Y-%m-%d") + '/'  
-    try:
-      os.mkdir(img_path)
-    except OSError as e:
-      err_msg = e.strerror #this is a normal error when the img_path already issue
-    img_name = img_path + time.strftime("%H:%M:%S+") + str(pv) + '.jpg'
-    cmd = "raspistill -w 720 -h 720 -t 100 -vf -hf -o " + img_name
-    subprocess.call(cmd, shell=True)
-  else:
-    img_name = ''
+  
+  pv, sv, img_name = get_temp_and_img(save_picture)
   
   conn = create_or_open_database()
   curs = conn.cursor()
+  
+  if save_start_position == True:
+    #save new start time and start temp to log
+    start_time = time.strftime('%Y-%m-%d %H:%M:%S')
+    start_temp = pv 
+  else:
+    #take start time and start temp from last log
+    curs.execute("SELECT START_TEMP, START_TIME FROM LOGDATA ORDER BY rDatetime DESC limit 1")
+    start_temp, start_time = curs.fetchone() 
+ 
+  print [analysis_id, sv, pv, img_name, comments, status, start_time, start_temp]
+
   sql = """INSERT INTO LOGDATA 
-    (analysis_id, rDatetime, SV, PV, IMGNAME, COMMENTS)       
-    VALUES (?, datetime(CURRENT_TIMESTAMP, 'localtime'),?, ?, ?, ?);"""
-  curs.execute(sql, [analysis_id, sv, pv, img_name, comments])
+    (analysis_id, rDatetime, SV, PV, IMGNAME, COMMENTS, STATUS, START_TIME, START_TEMP)       
+    VALUES (?, datetime(CURRENT_TIMESTAMP, 'localtime'),?, ?, ?, ?, ?, ?, ?);"""
+  curs.execute(sql, [analysis_id, sv, pv, img_name, comments, status, start_time, start_temp])
   conn.commit()
   conn.close()
+  
   GPIO.output(LED_PIN, GPIO.LOW)
   GPIO.cleanup()
+  
   return [sv, pv, img_name]
   
-def get_log(analysis_id):
+def get_log(analysis_id, page=0):
   conn = create_or_open_database()
   curs = conn.cursor()
-  sql = """SELECT rDatetime, SV, PV, IMGNAME, COMMENTS FROM LOGDATA WHERE ANALYSIS_ID = ?;"""
-  curs.execute(sql, [analysis_id]) 
+  sql = """SELECT * FROM LOGDATA WHERE ANALYSIS_ID = ? ORDER BY rDatetime DESC LIMIT ? OFFSET ?;"""
+  try:
+    p = int(page)
+  except:
+    p = 0
+  curs.execute(sql, [analysis_id, log_per_page, p*log_per_page]) 
   res = curs.fetchall()
   conn.commit()
   conn.close()
   return res
+
+def get_n_log(analysis_id, count_str):
+  conn = create_or_open_database()
+  curs = conn.cursor()
+  sql = """SELECT * FROM LOGDATA WHERE ANALYSIS_ID = ? ORDER BY rDatetime DESC LIMIT ?;"""
+  try:
+    count = int(count_str)
+  except:
+    count = 0
+    
+  curs.execute(sql, [analysis_id, count]) 
+  res = curs.fetchall()
+  new_list = []
+  delta = 5
+  for i in range(len(res) - delta):
+    t1 = dt.datetime.strptime(res[i][2], '%Y-%m-%d %H:%M:%S')
+    t2 = dt.datetime.strptime(res[i + delta][2], '%Y-%m-%d %H:%M:%S')
+    deltaTime = (t1 - t2).seconds
+    deltaTemp = res[i][4] - res[i + delta][4]
+    ramp = 60.0*deltaTemp/deltaTime
+    new_list.append( [deltaTime, deltaTemp, ramp] )
+  #for i in range(delta):
+  #  new_list.append( [deltaTime, deltaTemp, ramp] )
+  conn.commit()
+  conn.close()
+  return [res, new_list]  
+  
+def get_last_log():
+  conn = create_or_open_database()
+  curs = conn.cursor()
+  curs.execute("SELECT ANALYSIS_ID, STATUS, PV, START_TIME, START_TEMP FROM LOGDATA ORDER BY rDatetime DESC limit 1")
+  id, status, pv, start_time, start_temp = curs.fetchone()
+  conn.commit()
+  conn.close()
+  return [id, status, pv, start_time, start_temp]
 
 def get_results_for_dates(date_from, date_to):
   conn = create_or_open_database()
@@ -212,4 +257,30 @@ def get_last_result():
   res = curs.fetchall()
   conn.close()
   return res  
+  
+def get_temp_and_img(save_picture):
+  pv = RS485.reads_PV()
+  while type(pv) is str:
+    print "get_temp_and_img --- Try get PV again"
+    pv = RS485.reads_PV()
+    
+  sv = RS485.reads_SV()
+  while type(sv) is str:
+    print "get_temp_and_img --- Try get SV again"
+    sv = RS485.reads_SV()
+   
+  if save_picture:
+    img_path_src = 'static/images/' + time.strftime("%Y-%m-%d") + '/'  
+    root_path = "/var/www/lab_app/"
+    try:
+      os.mkdir(root_path + img_path_src)
+    except OSError as e:
+      err_msg = e.strerror #this is a normal error when the img_path already issue
+    img_name_src = img_path_src + time.strftime("%H:%M:%S+") + str(pv) + '.jpg'
+    print img_name_src
+    print root_path + img_name_src
+    work_with_camera.get_photo('360', '360', root_path + img_name_src)
+  else:
+    img_name_src = ''
+  return [pv, sv, img_name_src]
 
