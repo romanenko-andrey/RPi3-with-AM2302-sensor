@@ -38,6 +38,7 @@ def analysis():
 def table():
   analysis_id  = request.args.get('id', None) 
   count = request.args.get('count', '100')  
+  print 'count', count
   try: 
     analysis_id = int(analysis_id)
   except:

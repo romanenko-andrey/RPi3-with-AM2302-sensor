@@ -14,7 +14,7 @@ port.stopbits = 2
 port.timeout = 1
 
 #maximum test for read or write params to port
-MAX_ATTEMPTS = 5
+MAX_ATTEMPTS = 10
 
 req_read_PV  = bytearray([0x01, 0x04, 0x03, 0xE8, 0x00, 0x01, 0xB1, 0xBA])
 req_set_1100 = bytearray([1, 6, 0, 0x39, 4, 0x4c, 0x5a, 0xf2])

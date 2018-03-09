@@ -3,6 +3,10 @@
   width:100%
 }
 
+.table thead th {
+  vertical-align: middle;
+}
+
 .find_button_div{
    padding: 20px 15px 0 15px;
 }
@@ -115,5 +119,11 @@
 @media print {
   .no-print {
     display: none;
+  }
+}
+
+@media (max-width: 768px){
+  .container {
+     max-width: 100%;
   }
 }

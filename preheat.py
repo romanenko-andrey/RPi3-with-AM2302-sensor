@@ -12,6 +12,7 @@ def set_preheat_temp():
   
   print "try to set temperature = " + str(set_temperature) 
   if RS485.writes_SV(set_temperature) == False:
+    print "set_preheat_temp() --> error set SV = ", set_temperature
     return {'state': 'error', 
             'msg' : "Error write temperature = " + 
             str(set_temperature) + 
@@ -24,6 +25,7 @@ def set_preheat_temp():
       db.add_new_log_to_and("PREHEAT", db.SAVE_START_TIME, db.DONT_SAVE_PICTURE, "preheat on")
       return {'state': 'ok', 'msg' : 'The preheating is starting now.'}
     attempt -= 1
+  print "set_preheat_temp() --> error set maximum power value = ", max_preheat_power_value  
   return {'state': 'error', 
           'msg' : "Error write maximum power value = " + 
           str(max_preheat_power_value) + 

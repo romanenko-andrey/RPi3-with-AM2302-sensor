@@ -22,7 +22,6 @@ print "cool_ramp=", cool_ramp, " heat_ramp=", heat_ramp
   
 while True:
   id, status, current_temp, start_time_str, start_temp = db.get_last_log()
-  
   nextSV = current_temp
   
   if status == "STOP" or status == "PREHEAT"  :
@@ -43,17 +42,23 @@ while True:
       #COOLING START
       db.add_new_log_to_and("COOLING", db.SAVE_START_TIME, db.DONT_SAVE_PICTURE, "stop heating")
   elif status == "COOLING":
-    deltaT = (current_time - start_time).seconds * cool_ramp / 60
-    nextSV = start_temp - deltaT  
-    if nextSV < min_temp:
-      #stop cooling and 
-      db.add_new_log_to_and("STOP", db.SAVE_START_TIME, db.DONT_SAVE_PICTURE, "stop heating")  
-      preheat.set_preheat_temp()
-      print "TK4S_BOT was stopped after finishing the cooling process"
-      exit() 
-      
-  #print status, "PV =", current_temp, "SV = ", nextSV, "time=", time.strftime('%Y-%m-%d %H:%M:%S'), "start_time=", start_time
-  
-  RS485.writes_SV(nextSV) 
+    try:
+      deltaT = (current_time - start_time).seconds * cool_ramp / 60
+      nextSV = start_temp - deltaT 
+      if nextSV < min_temp:
+        #stop cooling and 
+        #db.add_new_log_to_and("STOP", db.SAVE_START_TIME, db.DONT_SAVE_PICTURE, "stop heating")  
+        preheat.set_preheat_temp()
+        print "TK4S_BOT was stopped after finishing the cooling process"
+        exit()       
+    except:
+      print 'error in coolling process'
+       
+  print status, "PV =", current_temp, "SV = ", nextSV, "time=", time.strftime('%Y-%m-%d %H:%M:%S'), "start_time=", start_time
+  try:
+    nextSV = int(nextSV)
+    RS485.writes_SV(nextSV) 
+  except:
+    print "error int value SV ", nextSV
   
   sleep(log_interval)

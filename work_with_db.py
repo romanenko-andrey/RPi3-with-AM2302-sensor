@@ -216,11 +216,15 @@ def get_n_log(analysis_id, count_str):
     t1 = dt.datetime.strptime(res[i][2], '%Y-%m-%d %H:%M:%S')
     t2 = dt.datetime.strptime(res[i + delta][2], '%Y-%m-%d %H:%M:%S')
     deltaTime = (t1 - t2).seconds
-    deltaTemp = res[i][4] - res[i + delta][4]
-    ramp = 60.0*deltaTemp/deltaTime
-    new_list.append( [deltaTime, deltaTemp, ramp] )
-  #for i in range(delta):
-  #  new_list.append( [deltaTime, deltaTemp, ramp] )
+    try:
+      deltaTemp = res[i][4] - res[i + delta][4]
+      ramp = 60.0*deltaTemp/deltaTime
+      deltaPVandSV = res[i][4] - res[i][3]
+    except:
+      deltaTemp = 0
+      ramp = 0
+      deltaPVandSV = 0
+    new_list.append( [deltaTime, deltaTemp, ramp, deltaPVandSV] )
   conn.commit()
   conn.close()
   return [res, new_list]  
