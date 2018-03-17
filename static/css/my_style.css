@@ -3,6 +3,21 @@
   width:100%
 }
 
+.analys-header{
+  font-size: 2rem;
+  font-weight: bold;
+  vertical-align: middle;
+  margin-right: 20px;
+}
+
+.page-btn-wrapper{
+  display: inline-block;
+}
+
+.btn-page{
+  margin-right: 0 20px;
+}
+
 .table thead th {
   vertical-align: middle;
 }
@@ -99,6 +114,10 @@
   .table td, .table th{
     padding: 5px;
   }
+  .img-frame{
+    width: 100%;
+  }
+
 }
 
 @media (max-width: 400px) {
@@ -113,6 +132,9 @@
     left: -200px;
     position: absolute;
     z-index: 100;
+  }
+  .page-btn-wrapper{
+    width: 100%;
   }
 }
 

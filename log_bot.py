@@ -18,7 +18,7 @@ while True:
     id, status, temp, start_temp, start_time  = db.get_last_log()
     if status == "STOP" or status == "COOLING" or temp >= max_temp:
       print '!!!!!!!!!!!!! STOP LOG_BOT !!!!!!!!!!!!!!!!'
-      db.add_new_log(id, status, db.DONT_SAVE_START_TIME, db.SAVE_PICTURE) 
+      #db.add_new_log(id, status, db.DONT_SAVE_START_TIME, db.SAVE_PICTURE) 
       exit()
     time.sleep(1)  
     

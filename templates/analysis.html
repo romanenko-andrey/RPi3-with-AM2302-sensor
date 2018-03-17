@@ -22,9 +22,13 @@
   <body>
     <div class="container">
       <a href="/analysis?id={{analysis_id}}&page={{page}}">
-        <h2>Ash analysis #<span id="analysis_id">{{analysis_id}}</span></h2>
+        <span class="analys-header">Ash analysis #<span id="analysis_id">{{analysis_id}}</span></span>
       </a>
-      
+      <div class="page-btn-wrapper">
+        <a href="/analysis?id={{analysis_id}}&page={{page|int - 1}}" class="btn btn-dark btn-page">PREV PAGE</a>
+        <a href="/analysis?id={{analysis_id}}&page=0" class="btn btn-primary btn-page">UPDATE</a>
+        <a href="/analysis?id={{analysis_id}}&page={{page|int + 1}}" class="btn btn-dark btn-page">NEXT PAGE</a>   
+      </div>
       <div class="mt-3 no-print">
           <button type="button" id="preheat" class="btn btn-warning analysis-btn">PREHEAT</button>
           <button type="button" id="start" class="btn btn-success analysis-btn">START</button>
@@ -42,10 +46,13 @@
         <thead class="thead-dark">
           <tr>
             <th class="horizontal-and-vertical-centering">Log Time</th>
-            <th class="horizontal-and-vertical-centering">Set Temp, &deg;C </th>
-            <th class="horizontal-and-vertical-centering">Real Temp, &deg;C</th>
-            <th class="th-start-temp">Start Temp, &deg;C</th> 
+         <!--   
+            <th class="th-set-temp horizontal-and-vertical-centering">Set Temp, &deg;C </th>
+         -->
+            <th class="horizontal-and-vertical-centering">Temp, &deg;C</th>
+          <!--  <th class="th-start-temp">Start Temp, &deg;C</th> 
             <th class="th-start-time">Start Time</th>
+          -->
             <th class="th-status">Status</th>
             <th class="th-comments">Comments</th>
             <th>Picture</th>
@@ -55,10 +62,14 @@
           {% for row in log %}
           <tr data-id="{{row[0]}}">
             <td class="td-date-time">{{row[2]}}</td>
-            <th>{{row[3]}}</th>
+            <!--
+            <th class="th-set-temp">{{row[3]}}</th>
+            -->
             <th>{{row[4]}}</th>
+            <!--
             <td class="th-start-temp">{{row[6]}}</td>
             <td class="th-start-time">{{row[7]}}</td>
+            -->
             <td class="th-status">{{row[8]}}</td>
             <td class="th-comments">{{row[9]}}</td>
             <td class="td-img-small" tabindex=11>

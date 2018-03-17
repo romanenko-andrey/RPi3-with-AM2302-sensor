@@ -50,10 +50,11 @@ while True:
         #db.add_new_log_to_and("STOP", db.SAVE_START_TIME, db.DONT_SAVE_PICTURE, "stop heating")  
         preheat.set_preheat_temp()
         print "TK4S_BOT was stopped after finishing the cooling process"
-        exit()       
     except:
       print 'error in coolling process'
-       
+    if nextSV < min_temp:
+      exit() 
+      
   print status, "PV =", current_temp, "SV = ", nextSV, "time=", time.strftime('%Y-%m-%d %H:%M:%S'), "start_time=", start_time
   try:
     nextSV = int(nextSV)

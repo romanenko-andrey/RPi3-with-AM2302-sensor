@@ -55,15 +55,41 @@ def new_test():
 
   
 @app.route("/camera", methods=['GET'])  
-def camera():    
+def camera_get():    
   size = request.args.get('size','320x320')
+  auto = request.args.get('auto','off')  
+  win = request.args.get('win','block')
   w, h = size.split('x')
   img_name_src = 'static/images/camera' + size + '.jpg'
   img_name = '/var/www/lab_app/' + img_name_src
-  work_with_camera.get_photo(w, h, img_name)
-  return render_template("img_test.html", img_name = img_name_src)
+  if (win == 'block'):
+    X0, Y0, dX, dY, pW, pH, sh, co, br, sa, awb, ex = work_with_camera.get_photo_area(img_name)
+  else:
+    X0, Y0, dX, dY, pW, pH, sh, co, br, sa, awb, ex = work_with_camera.get_photo(w, h, img_name)
+  print request.args
+  return render_template("img_test.html", img_name = img_name_src, auto = auto, win = win, 
+                         x0=X0, y0=Y0, dx=dX, dY=dY, pW=pW, pH=pH, sh=sh, co=co, br=br, sa=sa, awb=awb, ex=ex)
 
-
+@app.route("/camera", methods=['POST'])  
+def camera_post():    
+  x0 = request.form.get('x0', None)
+  y0 = request.form.get('y0', None)
+  dX = request.form.get('dX', None)
+  dY = request.form.get('dY', None)
+  sh = request.form.get('sh', None)  
+  co = request.form.get('co', None)
+  br = request.form.get('br', None)
+  sa = request.form.get('sa', None)
+  awb = request.form.get('awb', None)
+  ex = request.form.get('ex', None)
+  #print [x0, y0, dX, dY, sh, co, br, sa, awb, ex, default]
+  default = request.form.get('default', 'False')
+  if default == 'True':
+    work_with_camera.loadDefault()
+  else:
+    work_with_camera.saveSettings(x0, y0, dX, dY, sh, co, br, sa, awb, ex)
+  return redirect( "/camera" )
+  
 @app.route("/preheat", methods=['GET'])  #This method will start TK4 for heating on start temperature
 def preheat():    
   import preheat

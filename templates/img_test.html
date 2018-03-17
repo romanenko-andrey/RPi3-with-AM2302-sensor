@@ -24,42 +24,152 @@
       <div>
         <h4>Camera Test</h4>
         <a href="/" class="button">GO TO MAIN PAGE</a>
+        <div id="auto-button" class="button">AUTO</div>
+         <div id="win-button" class="button">WIN</div>
       </div>  
+      
+      <div class="row text-center">
+        <div>
+           <img class="img-frame" src='{{img_name}}'/>
+        </div>
+      </div>
+      
       <div class="row">
         <form id="img-size-form" action = "/camera" method="GET">  
+          <input id="auto-check" type="hidden" name="auto" value="{{auto}}"/>
+          <input id="win-check" type="hidden" name="win" value="{{win}}"/>
           <h4>Select resolution:</h4>
           <div class="two columns">
-            <input class="form-check-input" type="radio" name="size" value="160x160" id="radio_1" />
-            <label class="form-check-label" for="radio_1">160x160</label>
+            <label class="" for="radio_1">160x160</label>
+            <input class="" type="radio" name="size" value="160x160" id="radio_1" />
           </div>
           <div class="two columns">  
-            <input class="form-check-input" type="radio" name="size" value="320x320" id="radio_2" />
-            <label class="form-check-label" for="radio_2">320x320</label>
+            <label class="" for="radio_2">320x320</label>
+            <input class="" type="radio" name="size" value="320x320" id="radio_2" />
           </div>
           <div class="two columns">
-            <input class="form-check-input" type="radio" name="size" value="720x720" id="radio_3" />
-            <label class="form-check-label" for="radio_3">720x720</label>
+            <label class="" for="radio_3">720x720</label>
+            <input class="" type="radio" name="size" value="720x720" id="radio_3" />
           </div>
           <div class="two columns">
-            <input class="form-check-input" type="radio" name="size" value="1200x800" id="radio_4" />
-            <label class="form-check-label" for="radio_4">1200x800</label>
+            <label class="" for="radio_4">1200x800</label>
+            <input class="" type="radio" name="size" value="1200x800" id="radio_4" />
           </div>  
         </form>  
       </div>
-      <div class="row text-center">
-        <div>
-           <img class="w-100" src='{{img_name}}'/>
-        </div>
-      </div>
     </div>
 
+    <section id="camera-settings" class="container d-none no-print">
+      <form id="settings-form" action="/camera" method="POST"> 
+      
+        <div class="row">
+          <div class="three columns">
+            <label for="x0">Left</label>
+            <input id="x0" type="range" min="0" max="1" step="0.05" value="{{x0}}" name="x0">
+          </div>
+          <div class="three columns">
+            <label for="y0">Top</label>
+            <input id="y0" type="range" min="0" max="1" step="0.05" value="{{y0}}" name="y0">
+          </div>
+          <div class="three columns">
+            <label for="dX">Width</label>
+            <input id="dX" type="range" min="0" max="1" step="0.05" value="{{dX}}" name="dX">
+          </div>  
+          <div class="three columns">
+            <label for="dX">Height</label>
+            <input id="dY" type="range" min="0" max="1" step="0.05" value="{{dY}}" name="dY">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="three columns">
+            <label for="sh">Sharpness</label>
+            <input id="sh" type="range" min="-100" max="100" step="5" value="{{sh}}" name="sh">
+          </div>
+          <div class="three columns">
+            <label for="co">Contrast</label>
+            <input id="co" type="range" min="-100" max="100" step="5" value="{{co}}" name="co">
+          </div>
+          <div class="three columns">
+            <label for="sa">Saturation</label>
+            <input id="sa" type="range" min="-100" max="100" step="5" value="{{sa}}" name="sa">
+          </div>
+          <div class="three columns">
+            <label for="br">Brightness</label>
+            <input id="br" type="range" min="0" max="100" step="1" value="{{br}}" name="br">
+          </div>       
+        </div>      
+
+
+        <div class="row">
+          <div class="six columns">
+            <label for="awb">Automatic White Balance </label>
+            <select id="awb" value="{{awb}}" name="awb">
+              {% if awb == 'off' %}<option value="off" selected>off</option>{% else %}<option value="off">off</option>{% endif %}
+              {% if awb == 'auto' %}<option value="auto" selected>auto</option>{% else %}<option value="auto">auto</option>{% endif %}
+              {% if awb == 'sun' %}<option value="sun" selected>sun</option>{% else %}<option value="sun">sun</option>{% endif %}
+              {% if awb == 'cloud' %}<option value="cloud" selected>cloud</option>{% else %}<option value="cloud">cloud</option>{% endif %}
+              {% if awb == 'shade' %}<option value="shade" selected>shade</option>{% else %}<option value="shade">shade</option>{% endif %}
+              {% if awb == 'tungsten' %}<option value="tungsten" selected>tungsten</option>{% else %}<option value="tungsten">tungsten</option>{% endif %}
+              {% if awb == 'fluorescent' %}<option value="fluorescent" selected>fluorescent</option>{% else %}<option value="fluorescent">fluorescent</option>{% endif %}
+              {% if awb == 'incandescent' %}<option value="incandescent" selected>incandescent</option>{% else %}<option value="incandescent">incandescent</option>{% endif %}
+              {% if awb == 'flash' %}<option value="flash" selected>flash</option>{% else %}<option value="flash">flash</option>{% endif %}
+              {% if awb == 'horizon' %}<option value="horizon" selected>horizon</option>{% else %}<option value="horizon">horizon</option>{% endif %}
+            </select>
+          </div>
+          <div class="six columns">
+            <label for="ex">EV compensation</label>
+            <select id="ex" value="{{ex}}" name="ex">
+              {% if ex == 'auto' %}<option value="auto" selected>auto</option>{% else %}<option value="auto">auto</option>{% endif %}
+              {% if ex == 'night' %}<option value="night" selected>night</option>{% else %}<option value="night">night</option>{% endif %}
+              {% if ex == 'backlight' %}<option value="backlight" selected>backlight</option>{% else %}<option value="backlight">backlight</option>{% endif %}
+              {% if ex == 'sports' %}<option value="sports" selected>sports</option>{% else %}<option value="sports">sports</option>{% endif %}
+              {% if ex == 'snow' %}<option value="snow" selected>snow</option>{% else %}<option value="snow">snow</option>{% endif %}
+              {% if ex == 'beach' %}<option value="beach" selected>beach</option>{% else %}<option value="beach">beach</option>{% endif %}
+              {% if ex == 'verylong' %}<option value="verylong" selected>verylong</option>{% else %}<option value="verylong">verylong</option>{% endif %}
+              {% if ex == 'antishake' %}<option value="antishake" selected>antishake</option>{% else %}<option value="antishake">antishake</option>{% endif %}
+              {% if ex == 'fireworks' %}<option value="fireworks" selected>fireworks</option>{% else %}<option value="fireworks">fireworks</option>{% endif %}
+            </select>
+          </div>
+        </div>          
+        <input id="default" type="hidden" name="default" value="False"/>
+        <button id="change-button" class="btn btn-success btn-lg" type="submit">CHANGE SETTINGS</button>
+        <button id="default-button" class="btn btn-success btn-lg">DEFAULT</button>
+      </form> 
+    </section>  
+    
   </body>
  
   <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
   <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
   <script> 
-    jQuery("#img-size-form input[type=radio]").click(function(){
-      jQuery("#img-size-form").submit();
+    $("#img-size-form input[type=radio]").click(function(){
+      $("input#auto-check")[0].value = 'off';
+      $("input#win-check")[0].value = 'full';
+      $("#img-size-form").submit();
     });
+
+    $("#default-button").click(function(){
+      $("input#default")[0].value = 'True';
+      $("#settings-form").submit();
+    });
+    
+    if ($("input#auto-check")[0].value == 'on' ) {
+      var timerId = setInterval(function() {
+        $("#img-size-form").submit();
+      }, 2000);
+    }  
+
+    $("#auto-button").click(function(){
+      $("input#auto-check")[0].value = 'on';
+      $("#img-size-form").submit();
+    })
+    
+    $("#win-button").click(function(){
+      $("input#win-check")[0].value = 'block';
+      $("#img-size-form").submit();
+    })
+    
+    
    </script>
 </html>

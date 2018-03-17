@@ -8,7 +8,7 @@ import TK4S_RS485_LIB as RS485
 import subprocess
 import ConfigParser
 import RPi.GPIO as GPIO
-import work_with_camera
+import work_with_camera as camera
 
 Config = ConfigParser.ConfigParser()
 Config.read("/var/www/lab_app/settings.ini")
@@ -283,7 +283,8 @@ def get_temp_and_img(save_picture):
     img_name_src = img_path_src + time.strftime("%H:%M:%S+") + str(pv) + '.jpg'
     print img_name_src
     print root_path + img_name_src
-    work_with_camera.get_photo('360', '360', root_path + img_name_src)
+    #camera.get_photo(camera.pW, camera.pH, root_path + img_name_src)
+    camera.get_photo_area(root_path + img_name_src)
   else:
     img_name_src = ''
   return [pv, sv, img_name_src]
