@@ -90,7 +90,9 @@
             <div class="col-4"><label for="operator">Operator name</label></div>
             <div class="col-8"><input class="form-control" id="operator" type="text" value="" name="operator"></div>  
           </div>  
-          <button id="new_button" class="btn btn-success btn-lg" type="submit">START NEW ANALYSIS</button>
+			
+          <div id="cancel_button" class="btn btn-dark btn-lg" type="cancel">CANCEL</div>
+		  <button id="new_button" class="btn btn-success btn-lg" type="submit">START NEW ANALYSIS</button>
         </form> 
       </section>  
       
@@ -116,15 +118,15 @@
                 <th>Ash pos</th>
                 <th class="th-operator">Operator name</th>
                 <th class="th-comments">Comments</th>
-                <th>T1, &deg;C</th>
-                <th>T2, &deg;C</th>
-                <th>T3, &deg;C</th>
-                <th>T4, &deg;C</th>
+                <th>DT, &deg;C</th>
+                <th>ST, &deg;C</th>
+                <th>HT, &deg;C</th>
+                <th>FT, &deg;C</th>
               </tr>
             </thead>
             <tbody>
               {% for row in results %}
-              <tr data-id="{{row[1]}}" onclick="row_click( {{row[1]}} )">
+              <tr data-id="{{row[1]}}" onclick="row_click( {{row[1]}} )" style="cursor:pointer">
                 <td class="th-no">{{row[0]}}</td>
                 <th>{{row[1]}}</th>
                 <td class="th-date">{{row[2]}}</td>
@@ -141,26 +143,16 @@
             </tbody>
           </table>
         </div>
-      <!-- Google Charts Code start -->
-      <div class="two-thirds column" style="margin-top: 5%">
-        <div class="row">                  
-          <div class="row">
-            <div class="three columns">
-              <div id="chart_temps"></div>
-              <div id="chart_humid"></div>
-            </div>
-          </div>
-        </div>     
-      </div>
-      <!-- Google Charts Code end -->
+      
     </div>
   </body>
   
  
-  <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
-  <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+  <script src="static/javascript/jquery-1.11.2.min.js"></script>
+  <script src="static/javascript/jquery-migrate-1.2.1.min.js"></script>
   <script src="static/javascript/jquery.datetimepicker.full.min.js"></script>
- 
+  <script src="static/javascript/ash-control.js"></script>
+  
   <script>
     $('#datetimepicker1').datetimepicker({
       format:'Y-m-d H:i',
@@ -171,12 +163,8 @@
       format:'Y-m-d H:i',
       defaultDate:'{{to_date}}'
     });
-
-    //hide forms
-    //$("#new_test_form_section").toggle();
-    //$("#search_form_section").toggle();
   </script>
   
-  <script src="static/javascript/ash-control.js"></script>
+  
 </html>
 

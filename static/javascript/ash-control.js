@@ -17,12 +17,6 @@ $("#stop_and_cool").click(function(){
 })
 
 
-$("#start").click(function(){
-  console.log("Sending data...");
-  $("#status_info").text("Sending data...");
-  $.get("/start").done(showResults);
-  return false; 
-})
 
 function showResults(data){
   var res = JSON.parse(data);
@@ -32,6 +26,11 @@ function showResults(data){
 }
   
 $("#new_test").click(function(){
+  $("#new_test_form_section").toggleClass("d-none");
+  return false; 
+})
+
+$("#cancel_button").click(function(){
   $("#new_test_form_section").toggleClass("d-none");
   return false; 
 })

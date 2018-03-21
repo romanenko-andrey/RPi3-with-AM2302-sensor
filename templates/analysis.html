@@ -31,7 +31,11 @@
       </div>
       <div class="mt-3 no-print">
           <button type="button" id="preheat" class="btn btn-warning analysis-btn">PREHEAT</button>
-          <button type="button" id="start" class="btn btn-success analysis-btn">START</button>
+          <button type="button" id="start-modal-show" class="btn btn-success analysis-btn" data-toggle="modal" data-target="#startModal">
+		     START
+		  </button>
+		  
+	  
           <button type="button" id="stop_and_cool" class="btn btn-primary analysis-btn">COOL</button>
           <button type="button" id="stop_heater_and_log" class="btn btn-danger analysis-btn">STOP ALL</button>
           <a href="/table?id={{analysis_id}}" class="btn btn-dark analysis-btn">TABLE</a>
@@ -53,6 +57,8 @@
           <!--  <th class="th-start-temp">Start Temp, &deg;C</th> 
             <th class="th-start-time">Start Time</th>
           -->
+            <th class="th-button">Control</th>
+            
             <th class="th-status">Status</th>
             <th class="th-comments">Comments</th>
             <th>Picture</th>
@@ -70,6 +76,14 @@
             <td class="th-start-temp">{{row[6]}}</td>
             <td class="th-start-time">{{row[7]}}</td>
             -->
+            
+            <td class="th-button">    
+              {% if row[5] != '' %}
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal">
+                  SET
+                </button>
+              {% endif %}
+            </td>
             <td class="th-status">{{row[8]}}</td>
             <td class="th-comments">{{row[9]}}</td>
             <td class="td-img-small" tabindex=11>
@@ -82,11 +96,126 @@
         </tbody>
       </table>
     </div>
+
+
+    <!-- Select Temperature Modal Window -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModal" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLongTitle">Select a temperature stage <span>...</span></h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-1">
+              <span><strong>1</strong> position</span>
+              <button class="btn img-button"><img data-pos="1" data-temp="1" class="img-inside-button" src="static/images/DT.png"/></button>
+              <button class="btn img-button"><img data-pos="1" data-temp="2" class="img-inside-button" src="static/images/ST.png"/></button>
+              <button class="btn img-button"><img data-pos="1" data-temp="3" class="img-inside-button" src="static/images/HT.png"/></button>
+              <button class="btn img-button"><img data-pos="1" data-temp="4" class="img-inside-button" src="static/images/FT.png"/></button>
+            </div>
+            <div class="mb-1">
+              <span><strong>2</strong> position</span>
+              <button class="btn img-button"><img data-pos="2" data-temp="1" class="img-inside-button" src="static/images/DT.png"/></button>
+              <button class="btn img-button"><img data-pos="2" data-temp="2" class="img-inside-button" src="static/images/ST.png"/></button>
+              <button class="btn img-button"><img data-pos="2" data-temp="3" class="img-inside-button" src="static/images/HT.png"/></button>
+              <button class="btn img-button"><img data-pos="2" data-temp="4" class="img-inside-button" src="static/images/FT.png"/></button>
+           </div>
+             <div class="mb-1">
+              <span><strong>3</strong> position</span> 
+              <button class="btn img-button"><img data-pos="3" data-temp="1" class="img-inside-button" src="static/images/DT.png"/></button>
+              <button class="btn img-button"><img data-pos="3" data-temp="2" class="img-inside-button" src="static/images/ST.png"/></button>
+              <button class="btn img-button"><img data-pos="3" data-temp="3" class="img-inside-button" src="static/images/HT.png"/></button>
+              <button class="btn img-button"><img data-pos="3" data-temp="4" class="img-inside-button" src="static/images/FT.png"/></button>
+            </div>
+          
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" id="save-temp-button" class="btn btn-primary">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>  
+    
+	<!-- Start Analysis Modal Window -->
+    <div class="modal fade" id="startModal" tabindex="-1" role="dialog" aria-labelledby="startModal" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLongTitle">Select settings</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+			<div class="form-group row">
+				<div class="col-6"><label for="video_start_temp">Video capture start temperature</label></div>
+				<div class="col-6">
+					<select class="form-control" id="video_start_temp" value="900" name="video_start_temp">
+						<option value="700">700</option>
+						<option value="800">800</option>
+						<option value="900" selected>900</option>
+						<option value="1000">1000</option>
+					</select> 
+				</div>  
+			</div> 
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" id="start" class="btn btn-primary">Start analysis</button>
+          </div>
+        </div>
+      </div>
+    </div>  
+	
+	
   </body>
-  
- 
-  <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
-  <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+   
+  <script src="static/javascript/jquery-1.11.2.min.js"></script>
+  <script src="static/javascript/jquery-migrate-1.2.1.min.js"></script>
+  <script src="static/javascript/bootstrap.min.js"></script>
   <script src="static/javascript/ash-control.js"></script>
+  
+  <script>
+    var modal_header_span = $('#exampleModalLongTitle>span');
+    
+    $('#myModal').on('hide.bs.modal', function (e) {
+      console.log('hide modal');
+      console.log(e);
+    })
+    
+    $('#myModal').on('show.bs.modal', function (e) {
+      modal_header_span.text('...');
+      modal_header_span.data('pos', '');
+      modal_header_span.data('temp', '');
+    })
+    
+    $('button.btn.img-button').on('click', function(e) {
+      stage = $(e.target);
+      pos_no = stage.data('pos');
+      temp_no = stage.data('temp');
+      modal_header_span.data('pos', pos_no);
+      modal_header_span.data('temp', temp_no);
+      modal_header_span.text(temp_no + " for ash no." + pos_no);
+    })
+    
+    $('#save-temp-button').on('click', function(e) {
+      console.log('pos=', modal_header_span.data('pos'), 'temp=', modal_header_span.data('temp') );
+      $('#myModal').modal('hide');
+    })
+	
+	
+	$("#start").click(function(){
+	  console.log("Sending data...");
+	  $("#status_info").text("Sending data...");
+	  $.get("/start").done(showResults);
+	  $('#startModal').modal('hide'); 
+	})
+	
+	
+  </script>
 </html>
 

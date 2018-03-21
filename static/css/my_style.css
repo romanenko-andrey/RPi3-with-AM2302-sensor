@@ -3,6 +3,14 @@
   width:100%
 }
 
+.img-button{
+  padding: 0;
+}
+
+.img-inside-button{
+  width: 50px;
+}
+
 .analys-header{
   font-size: 2rem;
   font-weight: bold;
