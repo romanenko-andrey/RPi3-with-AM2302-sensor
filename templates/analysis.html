@@ -79,7 +79,10 @@
             
             <td class="th-button">    
               {% if row[5] != '' %}
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal">
+                <button type="button" class="btn btn-primary" 
+                  data-toggle="modal" 
+                  data-target="#myModal"
+                  data-img="{{row[5]}}">
                   SET
                 </button>
               {% endif %}
@@ -95,6 +98,13 @@
           {% endfor %}
         </tbody>
       </table>
+      <div class="page-btn-wrapper">
+        <a href="/analysis?id={{analysis_id}}&page={{page|int - 1}}" class="btn btn-dark btn-page">PREV PAGE</a>
+        <a href="/analysis?id={{analysis_id}}&page=0" class="btn btn-primary btn-page">UPDATE</a>
+        <a href="/analysis?id={{analysis_id}}&page={{page|int + 1}}" class="btn btn-dark btn-page">NEXT PAGE</a>   
+        <a href="/table?id={{analysis_id}}" class="btn btn-info btn-page">TABLE</a>
+        <a href="/?id={{analysis_id}}" class="btn btn-success btn-page">MAIN PAGE</a>
+      </div>
     </div>
 
 
@@ -145,7 +155,7 @@
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLongTitle">Select settings</h5>
+            <h5 class="modal-title" id="startModalLongTitle">Select settings <span></span></h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
@@ -181,37 +191,50 @@
   
   <script>
     var modal_header_span = $('#exampleModalLongTitle>span');
-    
+    var start_header_span = $('#startModalLongTitle>span');
+	
     $('#myModal').on('hide.bs.modal', function (e) {
-      console.log('hide modal');
-      console.log(e);
+
     })
     
     $('#myModal').on('show.bs.modal', function (e) {
+	  modal_header_span.data('img', $(e.relatedTarget).data('img'));
       modal_header_span.text('...');
       modal_header_span.data('pos', '');
       modal_header_span.data('temp', '');
     })
     
     $('button.btn.img-button').on('click', function(e) {
-      stage = $(e.target);
-      pos_no = stage.data('pos');
-      temp_no = stage.data('temp');
+      var stage = $(e.target);
+      var pos_no = stage.data('pos');
+      var temp_no = stage.data('temp');
       modal_header_span.data('pos', pos_no);
       modal_header_span.data('temp', temp_no);
       modal_header_span.text(temp_no + " for ash no." + pos_no);
     })
     
+	$('#video_start_temp').on('click', function(e) {
+      set_value = $(e.target);
+      start_header_span.data('value', set_value[0].value);
+    })
+	
     $('#save-temp-button').on('click', function(e) {
       console.log('pos=', modal_header_span.data('pos'), 'temp=', modal_header_span.data('temp') );
+	  console.log('img=', modal_header_span.data('img') );
+	  var id = $("span#analysis_id").text();
+	  $.get("/save_ash_img?id=" + id + 
+	                      "&pos=" + modal_header_span.data('pos') +
+	                      "&temp=" + modal_header_span.data('temp') +
+						  "&img=" + modal_header_span.data('img') );
       $('#myModal').modal('hide');
     })
 	
 	
 	$("#start").click(function(){
 	  console.log("Sending data...");
+	  console.log( start_header_span.data('value') );
 	  $("#status_info").text("Sending data...");
-	  $.get("/start").done(showResults);
+	  $.get("/start?video_start="+start_header_span.data('value')).done(showResults);
 	  $('#startModal').modal('hide'); 
 	})
 	

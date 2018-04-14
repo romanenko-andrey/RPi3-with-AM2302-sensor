@@ -134,10 +134,26 @@
                 <td>{{row[4]}}</td>
                 <td class="th-operator">{{row[5]}}</td>
                 <td class="th-comments">{{row[6]}}</td>
-                <td>{{row[7]}}</td><!-- 7 = T1; 8 = Img1; 9 = imgName1--->
-                <td>{{row[10]}}</td><!-- 10 = T2; 11 = Img2; 12 = imgName2--->
-                <td>{{row[13]}}</td><!-- 13 = T3; 14 = Img3; 15 = imgName3--->
-                <td>{{row[16]}}</td><!-- 16 = T4; 17 = Img4; 18 = imgName4--->
+                <td>{{row[7]}}
+                   {% if row[9] != None %}
+                      <img src="{{row[9]}}" class="img_small" tabindex=12/>
+                   {% endif %}
+                </td><!-- 7 = T1; 8 = Img1; 9 = imgName1--->
+                <td>{{row[10]}}
+                   {% if row[12] != None %}
+                      <img src="{{row[12]}}" class="img_small" tabindex=12/>
+                   {% endif %}
+                </td><!-- 10 = T2; 11 = Img2; 12 = imgName2--->
+                <td>{{row[13]}}
+                   {% if row[15] != None %}
+                      <img src="{{row[15]}}" class="img_small" tabindex=12/>
+                   {% endif %}
+                </td><!-- 13 = T3; 14 = Img3; 15 = imgName3--->
+                <td>{{row[16]}}
+                   {% if row[18] != None %}
+                      <img src="{{row[18]}}" class="img_small" tabindex=12/>
+                   {% endif %}
+                </td><!-- 16 = T4; 17 = Img4; 18 = imgName4--->
               </tr>
               {% endfor %}
             </tbody>

@@ -97,6 +97,8 @@ def new_analysis(lab_numbers, operator, comments = ['', '', '']):
   return analysis_id
 
 def insert_picture(id, stage, picture_file):
+  picture_src_name = picture_file
+  picture_file =  '/var/www/lab_app/' + picture_src_name
   if not os.path.exists(picture_file):
     print 'file name ', picture_file, ' is not correct'
     return False
@@ -117,8 +119,10 @@ def insert_picture(id, stage, picture_file):
       sql='''UPDATE RESULTS SET TEMP3 = ?, IMG3 = ?, IMGNAME3 = ? WHERE ID=?;'''
     if stage == 4:
       sql='''UPDATE RESULTS SET TEMP4 = ?, IMG4 = ?, IMGNAME4 = ? WHERE ID=?;'''
-    conn.execute(sql,[atemp, sqlite3.Binary(ablob), picture_file, id]) 
+    conn.execute(sql,[atemp, sqlite3.Binary(ablob), picture_src_name, id]) 
     conn.commit()
+    #print sql
+    #print [atemp, picture_src_name, id]
   conn.close()
   return True
   
@@ -171,7 +175,7 @@ def add_new_log(analysis_id, status, save_start_position = False, save_picture =
     curs.execute("SELECT START_TEMP, START_TIME FROM LOGDATA ORDER BY rDatetime DESC limit 1")
     start_temp, start_time = curs.fetchone() 
  
-  print [analysis_id, sv, pv, img_name, comments, status, start_time, start_temp]
+  #print [analysis_id, sv, pv, img_name, comments, status, start_time, start_temp]
 
   sql = """INSERT INTO LOGDATA 
     (analysis_id, rDatetime, SV, PV, IMGNAME, COMMENTS, STATUS, START_TIME, START_TEMP)       
@@ -265,12 +269,12 @@ def get_last_result():
 def get_temp_and_img(save_picture):
   pv = RS485.reads_PV()
   while type(pv) is str:
-    print "get_temp_and_img --- Try get PV again"
+    #print "get_temp_and_img --- Try get PV again"
     pv = RS485.reads_PV()
     
   sv = RS485.reads_SV()
   while type(sv) is str:
-    print "get_temp_and_img --- Try get SV again"
+    #print "get_temp_and_img --- Try get SV again"
     sv = RS485.reads_SV()
    
   if save_picture:
@@ -281,11 +285,21 @@ def get_temp_and_img(save_picture):
     except OSError as e:
       err_msg = e.strerror #this is a normal error when the img_path already issue
     img_name_src = img_path_src + time.strftime("%H:%M:%S+") + str(pv) + '.jpg'
-    print img_name_src
-    print root_path + img_name_src
+    #print img_name_src
+    #print root_path + img_name_src
     #camera.get_photo(camera.pW, camera.pH, root_path + img_name_src)
     camera.get_photo_area(root_path + img_name_src)
   else:
     img_name_src = ''
   return [pv, sv, img_name_src]
 
+def save_ash_img(analysis_id, ash_position, stage, picture_file):
+  conn = create_or_open_database()
+  curs = conn.cursor()
+  sql = "SELECT id FROM RESULTS WHERE ANALYSIS_ID = ? LIMIT 1 OFFSET ?;"
+  curs.execute(sql, [analysis_id, int(ash_position) - 1])
+  [result_id] = curs.fetchone()
+  conn.close()
+  print 'res_id = ', result_id
+  insert_picture(result_id, int(stage), picture_file)
+  return result_id  

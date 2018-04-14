@@ -3,7 +3,8 @@ import ConfigParser
 import sys
 
 settings_path = "/var/www/lab_app/camera-settings.ini"
-HorisontalFlip = "-hf"
+#HorisontalFlip = "-hf"
+HorisontalFlip = ""
 VerticalFlip = "-vf"
 x0 = 0.2
 y0 = 0.3

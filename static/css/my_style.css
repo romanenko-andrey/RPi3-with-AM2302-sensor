@@ -92,7 +92,7 @@
 
 @media (max-width: 1200px) {
   .th-comments, .th-no{
-    display: none;
+    _display: none;
   }
 }
 

@@ -1,4 +1,4 @@
-def heating():
+def heating(start_photo_temp):
   import work_with_db as db
   import subprocess
   import json
@@ -17,7 +17,9 @@ def heating():
   #START ALL BOTS
   db.add_new_log_to_and("HEATING", True, False, "start analysis")
   time.sleep(0.5) 
-  subprocess.Popen(["/var/www/lab_app/venv/bin/python", '/var/www/lab_app/log_bot.py'])
+  subprocess.Popen(["/var/www/lab_app/venv/bin/python", 
+                    '/var/www/lab_app/log_bot.py', 
+					 start_photo_temp])
   subprocess.Popen(["/var/www/lab_app/venv/bin/python", '/var/www/lab_app/tk4s-bot.py'])
   
   print "try to set maximum power value = ", max_power_value, "%"

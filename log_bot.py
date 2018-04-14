@@ -1,6 +1,7 @@
 import time
 import work_with_db as db
 import ConfigParser
+import sys
 
 Config = ConfigParser.ConfigParser()
 Config.read("/var/www/lab_app/settings.ini")
@@ -8,8 +9,16 @@ log_interval = Config.getint('General', 'log_interval')
 start_photo_temp = Config.getint('StageTwo', 'start_photo_temp')
 max_temp = Config.getint('StageTwo', 'max_temp')
 
+if (len(sys.argv) >= 2):
+  try:
+     start_photo_temp = int( sys.argv[1] )
+  except:
+	 start_photo_temp = 900
+	 
 start_time = time.time()
 print '!!!!!!!!!!!!! START LOG_BOT !!!!!!!!!!!!!'
+print "start_photo_temp = ", start_photo_temp  
+
 
 while True:
   i = log_interval

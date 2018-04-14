@@ -104,8 +104,9 @@ def stop_heater():
   
 @app.route("/start", methods=['GET'])  #Start log-bot and heat-bot
 def start_analysis():  
+  start_video_temp = request.args.get('video_start','1000')
   import heating
-  return json.dumps( heating.heating() )
+  return json.dumps( heating.heating(start_video_temp) )
 
   
 @app.route("/cool", methods=['GET'])  #Start cooling-bot
@@ -120,6 +121,19 @@ def get_results():
   analysis_no = request.args.get('analysis_id', '0')
   res = db.get_log(analysis_no)
   return json.dumps(res)
+
+@app.route("/save_ash_img", methods=['GET']) 
+def save_ash_img():    
+  import json
+  analysis_id = request.args.get('id', None)
+  ash_position = request.args.get('pos', '1')
+  stage = request.args.get('temp', '1')
+  img = request.args.get('img', '')
+  img = img.replace(' ', '+')
+  #img = '/var/www/lab_app/' + img
+  print ['save_img', analysis_id, ash_position, stage, img]
+  res = db.save_ash_img(analysis_id, ash_position, stage, img)
+  return 'Ok'
 
   
 def get_records():
@@ -150,7 +164,7 @@ def get_records():
       id = results[0][1]
   else:
     results = db.get_results_for_dates(from_date_str, to_date_str)
-   
+  #print results 
   return [results, id, from_date_str, to_date_str]          
 
 def get_records_for_new_analysis():
