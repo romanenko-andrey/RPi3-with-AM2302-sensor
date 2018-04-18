@@ -6,10 +6,10 @@ settings_path = "/var/www/lab_app/camera-settings.ini"
 #HorisontalFlip = "-hf"
 HorisontalFlip = ""
 VerticalFlip = "-vf"
-x0 = 0.2
-y0 = 0.3
-dX = 0.5
-dY = 0.5
+x0 = 0.3
+y0 = 0.4
+dX = 0.3
+dY = 0.3
 pW = 360
 pH = 360
 sharpness =  -100
@@ -87,10 +87,10 @@ def saveSettings(x0, y0, dX, dY, sh, co, br, sa, awb, ex):
 def loadDefault():
   parser = ConfigParser.SafeConfigParser()
   parser.add_section('Camera')
-  parser.set('Camera', 'leftConerX', '0.2')
-  parser.set('Camera', 'leftConerY', '0.3')
-  parser.set('Camera', 'width', '0.5')
-  parser.set('Camera', 'height', '0.5')
+  parser.set('Camera', 'leftConerX', '0.3')
+  parser.set('Camera', 'leftConerY', '0.4')
+  parser.set('Camera', 'width', '0.3')
+  parser.set('Camera', 'height', '0.3')
   parser.set('Camera', 'img_size_width', '360')
   parser.set('Camera', 'img_size_height', '360')
   parser.set('Camera', 'sharpness', '-100')
