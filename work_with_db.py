@@ -4,10 +4,10 @@ import time
 import datetime as dt
 import os.path
 from os import listdir, getcwd
-import TK4S_RS485_LIB as RS485
+#import TK4S_RS485_LIB as RS485
 import subprocess
 import ConfigParser
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
 import work_with_camera as camera
 
 Config = ConfigParser.ConfigParser()
@@ -73,9 +73,11 @@ def new_analysis(lab_numbers, operator, comments = ['', '', '']):
   conn = create_or_open_database()
   curs = conn.cursor()
   
-  sql = """SELECT analysis_id FROM LOGDATA ORDER BY rDatetime DESC limit 1;"""
+  #sql = """SELECT analysis_id FROM LOGDATA ORDER BY rDatetime DESC limit 1;"""
+  sql = """SELECT analysis_id FROM LOGDATA ORDER BY analysis_id DESC limit 1;"""
   curs.execute(sql)
   res = curs.fetchone()  
+  print res
   if res == None:
     analysis_id = 1
   else:
@@ -93,7 +95,7 @@ def new_analysis(lab_numbers, operator, comments = ['', '', '']):
   
   conn.commit()
   conn.close()
-  add_new_log(analysis_id, "READY", SAVE_START_TIME, DONT_SAVE_PICTURE, "initial log")
+  add_new_log(analysis_id, "READY", 0, 0, SAVE_START_TIME, DONT_SAVE_PICTURE, "initial log")
   return analysis_id
 
 def insert_picture(id, stage, picture_file):
@@ -151,17 +153,30 @@ def extract_picture(analysis_id, stage):
     output_file.write(ablob)
   return filename       
 
-def add_new_log_to_and(status, save_start_position, save_picture, comments = ''):
+def add_new_log_to_and(status, save_start_position, save_picture, pv, sv, comments = ''):
   id, status_now, temp, start_temp, start_time  = get_last_log()
-  add_new_log(id, status, save_start_position, save_picture, comments)
+  add_new_log(id, status, pv, sv, save_start_position, save_picture, comments)
     
-def add_new_log(analysis_id, status, save_start_position = False, save_picture = True, comments = ''):
-  GPIO.setwarnings(False)
-  GPIO.setmode(GPIO.BOARD)
-  GPIO.setup(LED_PIN, GPIO.OUT)
-  GPIO.output(LED_PIN, GPIO.HIGH)
+def add_new_log(analysis_id, status, pv, sv, save_start_position = False, save_picture = True, comments = ''):
+  #GPIO.setwarnings(False)
+  #GPIO.setmode(GPIO.BOARD)
+  #GPIO.setup(LED_PIN, GPIO.OUT)
+  #GPIO.output(LED_PIN, GPIO.HIGH)
   
-  pv, sv, img_name = get_temp_and_img(save_picture)
+  #pv, sv, img_name = get_temp_and_img(save_picture)
+  img_name = ''
+  if save_picture:
+    img_path_src = 'static/images/' + time.strftime("%Y-%m-%d") + '/'  
+    root_path = "/var/www/lab_app/"
+    try:
+      os.mkdir(root_path + img_path_src)
+    except OSError as e:
+      err_msg = e.strerror #this is a normal error when the img_path already issue
+    img_name = img_path_src + time.strftime("%H:%M:%S+") + str(pv) + '.jpg'
+    #print img_name_src
+    #print root_path + img_name_src
+    #camera.get_photo(camera.pW, camera.pH, root_path + img_name_src)
+    camera.get_photo_area(root_path + img_name)
   
   conn = create_or_open_database()
   curs = conn.cursor()
@@ -175,7 +190,7 @@ def add_new_log(analysis_id, status, save_start_position = False, save_picture =
     curs.execute("SELECT START_TEMP, START_TIME FROM LOGDATA ORDER BY rDatetime DESC limit 1")
     start_temp, start_time = curs.fetchone() 
  
-  #print [analysis_id, sv, pv, img_name, comments, status, start_time, start_temp]
+  print [analysis_id, sv, pv, img_name, comments, status, start_time, start_temp]
 
   sql = """INSERT INTO LOGDATA 
     (analysis_id, rDatetime, SV, PV, IMGNAME, COMMENTS, STATUS, START_TIME, START_TEMP)       
@@ -184,8 +199,8 @@ def add_new_log(analysis_id, status, save_start_position = False, save_picture =
   conn.commit()
   conn.close()
   
-  GPIO.output(LED_PIN, GPIO.LOW)
-  GPIO.cleanup()
+  #GPIO.output(LED_PIN, GPIO.LOW)
+  #GPIO.cleanup(LED_PIN)
   
   return [sv, pv, img_name]
   
@@ -267,15 +282,22 @@ def get_last_result():
   return res  
   
 def get_temp_and_img(save_picture):
+  print "DB_lib get_temp_and_img works"
   pv = RS485.reads_PV()
-  while type(pv) is str:
-    #print "get_temp_and_img --- Try get PV again"
-    pv = RS485.reads_PV()
+  if type(pv) is str:
+    print "error in get_temp_and_img ", pv
+    pv = 777
+  #while type(pv) is str:
+  #  print "get_temp_and_img --- Try get PV again"
+  #  pv = RS485.reads_PV()
     
   sv = RS485.reads_SV()
-  while type(sv) is str:
-    #print "get_temp_and_img --- Try get SV again"
-    sv = RS485.reads_SV()
+  if type(sv) is str:
+    print "error in get_temp_and_img ", pv
+    sv = 999
+  #while type(sv) is str:
+  #  print "get_temp_and_img --- Try get SV again"
+  #  sv = RS485.reads_SV()
    
   if save_picture:
     img_path_src = 'static/images/' + time.strftime("%Y-%m-%d") + '/'  

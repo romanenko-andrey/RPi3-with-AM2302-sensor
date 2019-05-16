@@ -15,7 +15,9 @@ port.timeout = 1
 
 #maximum test for read or write params to port
 MAX_ATTEMPTS = 10
-
+TIME_BETWEEN_REPEAT = 0.05
+TIME_AFTER_PORT_OPEN = 0.01
+ 
 req_read_PV  = bytearray([0x01, 0x04, 0x03, 0xE8, 0x00, 0x01, 0xB1, 0xBA])
 req_set_1100 = bytearray([1, 6, 0, 0x39, 4, 0x4c, 0x5a, 0xf2])
 req_read_SV  = bytearray([0x01, 0x04, 0x03, 0xEB, 0x00, 0x01, 0x41, 0xBA])
@@ -30,11 +32,22 @@ ERROR_READ_PV = 'Error: cannot read PV from TK4S'
 ERROR_WRITE_SV = 'Error: cannot write SV to TK4S'
 TEMPERATURE_ERROR_MSG = 'Error: the temperaure is out of range = 0 .. 1600'
 
+def bytes_to_str(rcv):
+  arr = bytearray(rcv)
+  s = []
+  for b in arr:
+    s.append( str(b) )
+  return s  
+  
+
 def open_port_and_read(request, n):
   try:
+    #print "-----------" 
     port.open()
+    time.sleep(TIME_AFTER_PORT_OPEN)
     port.write(request)
-    rcv = port.read(n) 
+    rcv = port.read(n)
+    print "-->", bytes_to_str(request), "  <--", bytes_to_str(rcv)
     port.close()
     return rcv
   except:
@@ -59,6 +72,7 @@ def check_crc_n7(rcv):
 
     
 def read_SV():
+  print "try to read_SV"
   rcv = open_port_and_read(req_read_SV, 7)
   if rcv == False:
     return PORT_ERROR_MSG
@@ -67,6 +81,7 @@ def read_SV():
   
 
 def read_PV():
+  print "try to read_PV"
   rcv = open_port_and_read(req_read_PV, 7)
   if rcv == False:
     return PORT_ERROR_MSG
@@ -81,12 +96,14 @@ def write_SV(sv):
   req_save_SV[6] = crc16 % 256
   req_save_SV[7] = crc16 // 256
   
+  print "try to write_SV ", sv
   rcv = open_port_and_read(req_save_SV, 8)
   if rcv == False:
     return PORT_ERROR_MSG
   else:    
     rez = bytearray(rcv)
     if rez != req_save_SV:
+      #print "Error send SV = ", sv
       return False    
   return True
 
@@ -97,6 +114,7 @@ def write_max_output_value(sv):
   req_save_MV[6] = crc16 % 256
   req_save_MV[7] = crc16 // 256
   
+  print "try to write_output_power MV ", sv
   rcv = open_port_and_read(req_save_MV, 8)
   if rcv == False:
     return PORT_ERROR_MSG
@@ -105,7 +123,7 @@ def write_max_output_value(sv):
   if rez == req_save_MV:
     return True    
   else: 
-    print "Error send MV = ", sv
+    #print "Error send MV = ", sv
     return False
     
 def reads_SV():
@@ -114,8 +132,9 @@ def reads_SV():
   while attempt > 0 and type(sv) is str:
     attempt -= 1
     sv = read_SV()
-    time.sleep(0.05)
+    time.sleep(TIME_BETWEEN_REPEAT)
   if attempt == 0 and type(sv) is str:
+    #print "Error read SV = ", sv
     return ERROR_READ_SV
   return sv
   
@@ -125,8 +144,9 @@ def reads_PV():
   while attempt > 0 and type(pv) is str:
     attempt -= 1
     pv = read_PV()
-    time.sleep(0.05)
+    time.sleep(TIME_BETWEEN_REPEAT)
   if attempt == 0 and type(pv) is str:
+    #print "Error read PV = ", pv
     return ERROR_READ_PV
   return pv
 
@@ -134,8 +154,9 @@ def writes_SV(sv):
   attempt = MAX_ATTEMPTS
   while write_SV(sv) == False and attempt > 0:
     attempt -= 1
-    time.sleep(0.05)
+    time.sleep(TIME_BETWEEN_REPEAT)
   if attempt == 0:
+    #print "Error write SV = ", sv
     return ERROR_WRITE_SV
   return True 
   

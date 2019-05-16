@@ -10,6 +10,8 @@ def set_preheat_temp():
   set_temperature = Config.getint("StageOne", "set_temp")
   max_preheat_power_value = Config.getint("StageOne", "max_preheat_power_value")
   
+  id, status, current_temp, start_time_str, start_temp = db.get_last_log()
+  
   print "try to set temperature = " + str(set_temperature) 
   if RS485.writes_SV(set_temperature) == False:
     print "set_preheat_temp() --> error set SV = ", set_temperature
@@ -22,7 +24,8 @@ def set_preheat_temp():
   attempt = RS485.MAX_ATTEMPTS   
   while attempt > 0:
     if (RS485.write_max_output_value(max_preheat_power_value) == True):
-      db.add_new_log_to_and("PREHEAT", db.SAVE_START_TIME, db.DONT_SAVE_PICTURE, "preheat on")
+      db.add_new_log_to_and("PREHEAT", db.SAVE_START_TIME, db.DONT_SAVE_PICTURE, 
+          current_temp, set_temperature, "preheat on")
       return {'state': 'ok', 'msg' : 'The preheating is starting now.'}
     attempt -= 1
   print "set_preheat_temp() --> error set maximum power value = ", max_preheat_power_value  

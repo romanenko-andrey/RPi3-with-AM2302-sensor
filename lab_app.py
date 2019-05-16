@@ -68,7 +68,7 @@ def camera_get():
     X0, Y0, dX, dY, pW, pH, sh, co, br, sa, awb, ex = work_with_camera.get_photo(w, h, img_name)
   print request.args
   return render_template("img_test.html", img_name = img_name_src, auto = auto, win = win, 
-                         x0=X0, y0=Y0, dx=dX, dY=dY, pW=pW, pH=pH, sh=sh, co=co, br=br, sa=sa, awb=awb, ex=ex)
+                         x0=X0, y0=Y0, dX=dX, dY=dY, pW=pW, pH=pH, sh=sh, co=co, br=br, sa=sa, awb=awb, ex=ex)
 
 @app.route("/camera", methods=['POST'])  
 def camera_post():    
